@@ -1,0 +1,8 @@
+# Streamlit and UI
+streamlit==1.28.1
+streamlit-option-menu==0.3.6
+
+# API and utilities
+requests==2.31.0
+pandas==2.1.3
+plotly==5.17.0

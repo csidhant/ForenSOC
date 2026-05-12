@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: forensoc-postgres
+    environment:
+      POSTGRES_DB: forensoc
+      POSTGRES_USER: forensoc_user
+      POSTGRES_PASSWORD: forensoc_password_change_me
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forensoc_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: forensoc-backend
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    environment:
+      DATABASE_URL: postgresql://forensoc_user:forensoc_password_change_me@postgres:5432/forensoc
+      SECRET_KEY: your-super-secret-key-change-in-production
+      DEBUG: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app/backend
+      - ./uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - forensoc-network
+
+  # Streamlit Frontend
+  frontend:
+    container_name: forensoc-frontend
+    build:
+      context: ./frontend
+    command: streamlit run streamlit_app.py --server.port=8501
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+    networks:
+      - forensoc-network
+
+volumes:
+  postgres_data:
+
+networks:
+  forensoc-network:
+    driver: bridge
