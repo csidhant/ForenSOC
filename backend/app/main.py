@@ -6,8 +6,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from app.config import get_settings
-from app.database import engine
-from app.models import Base
+from app.database import engine, SessionLocal
+from app.models.base import Base
+from app.models.detection import DetectionRule
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -71,8 +72,132 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 
-# TODO: Import and include API routers
-# from app.api import auth, logs, alerts, cases, evidence, timeline, reports, dashboard
+def init_default_roles_and_admin():
+    """Initialize essential role definitions and default admin user."""
+    from app.crud.user import RoleCRUD, UserCRUD
+
+    db = SessionLocal()
+    try:
+        default_roles = [
+            ("admin", "Administrator"),
+            ("analyst", "Security Analyst"),
+            ("investigator", "Investigation Analyst"),
+            ("viewer", "Read-only Viewer"),
+        ]
+
+        for role_name, description in default_roles:
+            if not RoleCRUD.get_role_by_name(db, role_name):
+                RoleCRUD.create_role(db, role_name, description)
+
+        admin_user = UserCRUD.get_user_by_username(db, settings.ADMIN_USERNAME)
+        if not admin_user:
+            admin_role = RoleCRUD.get_role_by_name(db, "admin")
+            if admin_role:
+                UserCRUD.create_user(
+                    db,
+                    username=settings.ADMIN_USERNAME,
+                    email=settings.ADMIN_EMAIL,
+                    password=settings.ADMIN_PASSWORD,
+                    role_id=admin_role.id,
+                )
+
+        # Initialize default detection rules
+        init_default_detection_rules(db)
+
+    finally:
+        db.close()
+
+
+def init_default_detection_rules(db):
+    """Initialize default detection rules."""
+    from app.services.detection_engine import RuleManager
+
+    rule_manager = RuleManager(db)
+
+    default_rules = [
+        {
+            "name": "SSH Brute Force Detection",
+            "description": "Detects multiple failed SSH login attempts from the same IP",
+            "severity": "High",
+            "rule_type": "ssh_brute_force",
+            "pattern": {
+                "event_type": "failed_login",
+                "threshold": 5
+            },
+            "event_type": "failed_login",
+            "threshold": 5,
+            "time_window_seconds": 300,
+            "mitre_tactic": "Credential Access",
+            "mitre_technique": "Brute Force",
+            "mitre_id": "T1110",
+        },
+        {
+            "name": "Suspicious Web Request",
+            "description": "Detects web requests with suspicious patterns",
+            "severity": "Medium",
+            "rule_type": "suspicious_web",
+            "pattern": {
+                "event_type": "http_request",
+                "path_contains": ["/admin", "/wp-admin", "/phpmyadmin"]
+            },
+            "event_type": "http_request",
+            "threshold": 1,
+            "time_window_seconds": 60,
+            "mitre_tactic": "Discovery",
+            "mitre_technique": "Network Service Scanning",
+            "mitre_id": "T1046",
+        },
+        {
+            "name": "Multiple Failed Logins",
+            "description": "Detects multiple authentication failures",
+            "severity": "Medium",
+            "rule_type": "multiple_failed_logins",
+            "pattern": {
+                "event_type": "failed_login",
+                "threshold": 3
+            },
+            "event_type": "failed_login",
+            "threshold": 3,
+            "time_window_seconds": 600,
+            "mitre_tactic": "Credential Access",
+            "mitre_technique": "Brute Force",
+            "mitre_id": "T1110",
+        },
+    ]
+
+    for rule_data in default_rules:
+        # Check if rule already exists
+        existing = db.query(DetectionRule).filter(DetectionRule.name == rule_data["name"]).first()
+        if not existing:
+            try:
+                rule_manager.create_rule(rule_data)
+                print(f"Created detection rule: {rule_data['name']}")
+            except Exception as e:
+                print(f"Failed to create rule {rule_data['name']}: {e}")
+
+
+@app.on_event("startup")
+async def startup_event():
+    init_default_roles_and_admin()
+
+
+# Import API routers
+from app.api.auth import router as auth_router
+from app.api.users import router as users_router
+from app.api.cases import router as cases_router
+from app.api.alerts import router as alerts_router
+from app.api.logs import router as logs_router
+from app.api.detection import router as detection_router
+from app.api.evidence import router as evidence_router
+
+# Register routers
+app.include_router(auth_router)
+app.include_router(users_router)
+app.include_router(cases_router)
+app.include_router(alerts_router)
+app.include_router(logs_router)
+app.include_router(detection_router)
+app.include_router(evidence_router)
 
 if __name__ == "__main__":
     import uvicorn
