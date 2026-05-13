@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     RANSOMWARE_FILE_THRESHOLD: int = 30
     RANSOMWARE_TIME_WINDOW: int = 60
     DATA_EXFILTRATION_THRESHOLD: int = 1024 * 1024 * 1024  # 1GB
+
+    # Initial admin credentials for development
+    ADMIN_USERNAME: str = "admin"
+    ADMIN_EMAIL: str = "admin@forensoc.local"
+    ADMIN_PASSWORD: str = "admin123"
+    DEFAULT_USER_ROLE: str = "viewer"
     
     class Config:
         """Configuration settings."""

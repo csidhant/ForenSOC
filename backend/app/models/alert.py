@@ -2,7 +2,7 @@
 Alert model for ForenSOC detection and alerting.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func, INET
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -24,8 +24,8 @@ class Alert(BaseModel):
     alert_type = Column(String(100))  # 'SSH Brute Force', 'Port Scan', 'Ransomware', etc.
     
     # Network Context
-    source_ip = Column(INET, nullable=True, index=True)
-    dest_ip = Column(INET, nullable=True)
+    source_ip = Column(String(45), nullable=True, index=True)
+    dest_ip = Column(String(45), nullable=True)
     source_port = Column(Integer, nullable=True)
     dest_port = Column(Integer, nullable=True)
     hostname = Column(String(255), nullable=True)
@@ -46,6 +46,7 @@ class Alert(BaseModel):
     case_id = Column(Integer, ForeignKey("cases.id"), nullable=True, index=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     assigned_to = Column(Integer, ForeignKey("users.id"), nullable=True)
+    detection_rule_id = Column(Integer, ForeignKey("detection_rules.id"), nullable=True)
     
     # Relationships
     raw_event = relationship("RawEvent")
@@ -55,6 +56,7 @@ class Alert(BaseModel):
     notes = relationship("AlertNote", back_populates="alert", cascade="all, delete-orphan")
     timeline_events = relationship("TimelineEvent", back_populates="related_alert")
     mitre_mappings = relationship("MitreMapping", foreign_keys="MitreMapping.alert_id", back_populates="alert", cascade="all, delete-orphan")
+    detection_rule = relationship("DetectionRule", back_populates="alerts")
     
     def __repr__(self):
         return f"<Alert {self.alert_number}: {self.title}>"

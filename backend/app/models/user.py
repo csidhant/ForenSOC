@@ -50,6 +50,7 @@ class User(BaseModel):
     created_cases = relationship("Case", foreign_keys="Case.created_by", back_populates="creator")
     uploaded_evidence = relationship("Evidence", foreign_keys="Evidence.uploaded_by", back_populates="uploader")
     generated_reports = relationship("Report", foreign_keys="Report.generated_by", back_populates="generator")
+    detection_rules = relationship("DetectionRule", back_populates="creator")
     
     # User assigned to alerts and cases
     assigned_alerts = relationship("Alert", foreign_keys="Alert.assigned_to", back_populates="assigned_analyst")

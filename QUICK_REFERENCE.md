@@ -29,10 +29,13 @@
 ### Frontend
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| **Framework** | Streamlit | MVP rapid development |
-| **Alternative** | React + TypeScript | Advanced portfolio version |
-| **UI Library** | Material-UI (React) | Advanced version |
-| **Charts** | Plotly/Altair | Data visualization |
+| **Framework** | React 18 + TypeScript | Production-ready UI |
+| **UI Library** | Material-UI 5 | Professional Material Design |
+| **State Management** | Zustand | Lightweight state management |
+| **HTTP Client** | Axios | API communication with interceptors |
+| **Build Tool** | Vite | Fast build tool |
+| **Charts** | Recharts | Data visualization |
+| **Routing** | React Router v6 | Client-side routing |
 
 ### Development Tools
 | Tool | Purpose |
@@ -81,12 +84,22 @@ ForenSOC/
 │   ├── requirements.txt
 │   ├── Dockerfile
 │   └── .env.example
-├── frontend/
-│   ├── streamlit_app.py
-│   ├── pages/               (11+ Streamlit pages)
-│   ├── components/          (Reusable components)
-│   ├── requirements.txt
-│   └── .streamlit/
+├── frontend-react/
+│   ├── src/
+│   │   ├── components/      (React components)
+│   │   ├── pages/           (Page components: 8 pages)
+│   │   ├── services/        (API service layer)
+│   │   ├── types/           (TypeScript type definitions)
+│   │   ├── theme/           (Material-UI theme)
+│   │   ├── utils/           (Utilities & stores)
+│   │   ├── App.tsx
+│   │   └── main.tsx
+│   ├── public/              (Static assets)
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── Dockerfile
+│   └── README.md
 ├── docker-compose.yml
 └── docs/                    (Project documentation)
 ```
