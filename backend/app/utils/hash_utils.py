@@ -70,3 +70,20 @@ def verify_hash(file_path: str, sha256_hash: str, md5_hash: str = None) -> dict:
 def get_file_size(file_path: str) -> int:
     """Get file size in bytes."""
     return Path(file_path).stat().st_size
+
+
+def calculate_file_hash(file_path: str, algorithm: str = "sha256") -> str:
+    """
+    Calculate hash of a file using the given algorithm.
+
+    Args:
+        file_path: Path to the file
+        algorithm: "sha256" or "md5"
+
+    Returns:
+        Hex digest string
+    """
+    algo = algorithm.lower()
+    if algo == "md5":
+        return calculate_md5(file_path)
+    return calculate_sha256(file_path)
