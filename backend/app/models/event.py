@@ -2,7 +2,7 @@
 Event models for log storage and normalization.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, BigInteger, func, INET
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, BigInteger, func
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -40,8 +40,8 @@ class NormalizedEvent(BaseModel):
     log_source = Column(String(100), nullable=False)
     
     # Network
-    source_ip = Column(INET, nullable=True, index=True)
-    dest_ip = Column(INET, nullable=True, index=True)
+    source_ip = Column(String(45), nullable=True, index=True)  # IPv4/IPv6 max length
+    dest_ip = Column(String(45), nullable=True, index=True)
     source_port = Column(Integer, nullable=True)
     dest_port = Column(Integer, nullable=True)
     

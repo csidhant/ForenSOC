@@ -52,32 +52,43 @@ python -m uvicorn app.main:app --reload --port 8000
 Backend will be available at: http://localhost:8000
 API Documentation: http://localhost:8000/api/docs
 
-### Step 3: Frontend Setup (Development)
+### Step 3: Frontend Setup (React + TypeScript)
 
-#### 3.1 Create Virtual Environment
-```bash
-cd frontend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-
-# Linux/macOS
-source venv/bin/activate
-```
+#### 3.1 Install Node.js
+- Download and install Node.js 16+ from https://nodejs.org/
+- Verify installation: `node --version` and `npm --version`
 
 #### 3.2 Install Dependencies
 ```bash
-pip install -r requirements.txt
+cd frontend-react
+npm install
 ```
 
-#### 3.3 Run Frontend
+#### 3.3 Configure Environment
 ```bash
-# From frontend directory
-streamlit run streamlit_app.py
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env with your settings (optional - defaults should work)
+# VITE_API_BASE_URL=http://localhost:8000/api
 ```
 
-Frontend will be available at: http://localhost:8501
+#### 3.4 Run Development Server
+```bash
+# From frontend-react directory
+npm run dev
+```
+
+Frontend will be available at: http://localhost:3000
+
+**Features**:
+- Modern React 18 + TypeScript interface
+- Material-UI 5 components for professional look
+- Dark/Light theme toggle
+- Real-time state management with Zustand
+- Responsive mobile-friendly design
+- Case and alert management
+- Professional dashboard with statistics
 
 ### Step 4: Verify Installation
 
@@ -108,12 +119,27 @@ docker-compose up -d
 This will start:
 - PostgreSQL database on port 5432
 - FastAPI backend on port 8000
-- Streamlit frontend on port 8501
+- React frontend on port 3000
 
 To stop:
 ```bash
 docker-compose down
 ```
+
+### Building React Frontend Docker Image
+
+Build the React frontend Docker image:
+```bash
+cd frontend-react
+docker build -t forensoc-react-frontend:latest .
+```
+
+Run the React frontend container:
+```bash
+docker run -p 3000:3000 forensoc-react-frontend:latest
+```
+
+Access at: http://localhost:3000
 
 To view logs:
 ```bash

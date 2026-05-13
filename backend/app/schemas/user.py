@@ -41,6 +41,13 @@ class UserCreate(UserBase):
     password: str = Field(..., min_length=8)
 
 
+class UserRegister(BaseModel):
+    """Schema for registering a new user."""
+    username: str = Field(..., min_length=3, max_length=255)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+
+
 class UserUpdate(BaseModel):
     """Schema for updating a user."""
     email: Optional[EmailStr] = None
