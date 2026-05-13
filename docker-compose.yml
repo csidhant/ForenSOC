@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: forensoc-postgres
@@ -19,7 +18,12 @@ services:
       timeout: 5s
       retries: 5
 
-  # FastAPI Backend
+  redis:
+    image: redis:7-alpine
+    container_name: forensoc-redis
+    ports:
+      - "6379:6379"
+
   backend:
     build:
       context: .
@@ -30,27 +34,47 @@ services:
       DATABASE_URL: postgresql://forensoc_user:forensoc_password_change_me@postgres:5432/forensoc
       SECRET_KEY: your-super-secret-key-change-in-production
       DEBUG: "true"
+      REDIS_URL: redis://redis:6379/0
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app/backend
+      - ./backend:/app
       - ./uploads:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - forensoc-network
 
-  # Streamlit Frontend
-  frontend:
-    container_name: forensoc-frontend
+  celery-worker:
     build:
-      context: ./frontend
-    command: streamlit run streamlit_app.py --server.port=8501
-    ports:
-      - "8501:8501"
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: forensoc-celery
+    working_dir: /app
+    command: celery -A app.celery_app:celery_app worker --loglevel=info
+    environment:
+      DATABASE_URL: postgresql://forensoc_user:forensoc_password_change_me@postgres:5432/forensoc
+      REDIS_URL: redis://redis:6379/0
     volumes:
-      - ./frontend:/app
+      - ./backend:/app
+      - ./uploads:/app/uploads
+    depends_on:
+      - backend
+      - redis
+      - postgres
+    networks:
+      - forensoc-network
+
+  frontend:
+    build:
+      context: ./frontend-react
+      dockerfile: Dockerfile
+    container_name: forensoc-frontend
+    ports:
+      - "3000:3000"
     depends_on:
       - backend
     networks:

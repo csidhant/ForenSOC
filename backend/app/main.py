@@ -189,6 +189,10 @@ from app.api.alerts import router as alerts_router
 from app.api.logs import router as logs_router
 from app.api.detection import router as detection_router
 from app.api.evidence import router as evidence_router
+from app.api.timeline import router as timeline_router
+from app.api.reports import router as reports_router
+from app.api.forensics import router as forensics_router
+from app.api.mitre import router as mitre_router
 
 # Register routers
 app.include_router(auth_router)
@@ -198,6 +202,10 @@ app.include_router(alerts_router)
 app.include_router(logs_router)
 app.include_router(detection_router)
 app.include_router(evidence_router)
+app.include_router(timeline_router)
+app.include_router(reports_router)
+app.include_router(forensics_router)
+app.include_router(mitre_router)
 
 if __name__ == "__main__":
     import uvicorn

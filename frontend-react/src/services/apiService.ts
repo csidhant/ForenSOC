@@ -17,6 +17,12 @@ import {
   DetectionRule,
   DetectionScanResponse,
   EvidenceUploadResponse,
+  TimelineEventRow,
+  TimelineRebuildResponse,
+  CaseReportRecord,
+  ReportGenerateResponse,
+  ForensicsJobResponse,
+  MitreCaseSummary,
 } from '@types/index';
 
 class ApiService {
@@ -293,6 +299,97 @@ class ApiService {
     window.URL.revokeObjectURL(url);
   }
 
+  async listTimelineEvents(
+    caseId: number,
+    params?: { skip?: number; limit?: number }
+  ): Promise<TimelineEventRow[]> {
+    const response = await this.api.get<TimelineEventRow[]>(`/timeline/cases/${caseId}/events`, {
+      params,
+    });
+    return response.data;
+  }
+
+  async rebuildTimeline(caseId: number): Promise<TimelineRebuildResponse> {
+    const response = await this.api.post<TimelineRebuildResponse>(
+      `/timeline/cases/${caseId}/rebuild`
+    );
+    return response.data;
+  }
+
+  async listCaseReports(caseId: number): Promise<CaseReportRecord[]> {
+    const response = await this.api.get<CaseReportRecord[]>('/reports', { params: { case_id: caseId } });
+    return response.data;
+  }
+
+  async generateCasePdf(caseId: number, title?: string): Promise<ReportGenerateResponse> {
+    const response = await this.api.post<ReportGenerateResponse>('/reports/generate', {
+      case_id: caseId,
+      title,
+    });
+    return response.data;
+  }
+
+  async downloadReportPdf(reportId: number, filename: string): Promise<void> {
+    const response = await this.api.get(`/reports/${reportId}/download`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename.endsWith('.pdf') ? filename : `${filename}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  async uploadPcapAnalyze(
+    caseId: number,
+    file: File,
+    description?: string,
+    asyncWorker?: boolean
+  ): Promise<ForensicsJobResponse> {
+    const fd = new FormData();
+    fd.append('case_id', String(caseId));
+    fd.append('file', file);
+    if (description) fd.append('description', description);
+    if (asyncWorker) fd.append('async_worker', 'true');
+    const response = await this.api.post<ForensicsJobResponse>('/forensics/pcap', fd);
+    return response.data;
+  }
+
+  async uploadMemoryAnalyze(
+    caseId: number,
+    file: File,
+    description?: string,
+    asyncWorker?: boolean
+  ): Promise<ForensicsJobResponse> {
+    const fd = new FormData();
+    fd.append('case_id', String(caseId));
+    fd.append('file', file);
+    if (description) fd.append('description', description);
+    if (asyncWorker) fd.append('async_worker', 'true');
+    const response = await this.api.post<ForensicsJobResponse>('/forensics/memory', fd);
+    return response.data;
+  }
+
+  async uploadSuricataEve(caseId: number, file: File, description?: string): Promise<ForensicsJobResponse> {
+    const fd = new FormData();
+    fd.append('case_id', String(caseId));
+    fd.append('file', file);
+    if (description) fd.append('description', description);
+    const response = await this.api.post<ForensicsJobResponse>('/forensics/suricata-eve', fd);
+    return response.data;
+  }
+
+  async getMitreCaseSummary(caseId: number): Promise<MitreCaseSummary> {
+    const response = await this.api.get<MitreCaseSummary>(`/mitre/cases/${caseId}/summary`);
+    return response.data;
+  }
+
+  async syncMitreMappings(caseId: number): Promise<{ case_id: number; mappings_created: number }> {
+    const response = await this.api.post(`/mitre/cases/${caseId}/sync`);
+    return response.data;
+  }
+
   // Events
   async getEvents(caseId: string, page: number = 1, pageSize: number = 10): Promise<any> {
     const response = await this.api.get(`/cases/${caseId}/events`, {
@@ -306,36 +403,7 @@ class ApiService {
     return response.data;
   }
 
-  // Timeline
-  async getTimeline(caseId: string): Promise<Timeline> {
-    const response = await this.api.get(`/cases/${caseId}/timeline`);
-    return response.data;
-  }
-
-  async getTimelineEvents(caseId: string): Promise<any> {
-    const response = await this.api.get(`/cases/${caseId}/timeline/events`);
-    return response.data;
-  }
-
-  // Reports
-  async getReports(caseId: string): Promise<Report[]> {
-    const response = await this.api.get(`/cases/${caseId}/reports`);
-    return response.data;
-  }
-
-  async createReport(caseId: string, data: Partial<Report>): Promise<Report> {
-    const response = await this.api.post(`/cases/${caseId}/reports`, data);
-    return response.data;
-  }
-
-  async generateReport(caseId: string, reportId: string): Promise<Blob> {
-    const response = await this.api.get(`/cases/${caseId}/reports/${reportId}/generate`, {
-      responseType: 'blob',
-    });
-    return response.data;
-  }
-
-  // Health
+  // Health (served at app root — call full URL if needed)
   async getHealth(): Promise<any> {
     const response = await this.api.get('/health');
     return response.data;

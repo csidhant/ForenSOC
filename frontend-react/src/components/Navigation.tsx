@@ -22,8 +22,8 @@ import {
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   FolderOpen as CaseIcon,
-  AlertCircle as AlertIcon,
-  FileText as ReportIcon,
+  ManageSearch as LogsIcon,
+  Description as ReportIcon,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Brightness4 as DarkIcon,
@@ -31,6 +31,10 @@ import {
   Notifications as NotificationsIcon,
   Shield as ShieldIcon,
   Inventory2 as EvidenceIcon,
+  Timeline as TimelineIcon,
+  Router as ForensicsIcon,
+  Security as MitreIcon,
+  WarningAmber as AlertBellIcon,
 } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore, useUiStore, useAlertStore } from '@utils/store';
@@ -62,11 +66,14 @@ const Navigation: React.FC = () => {
 
   const menuItems = [
     { label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-    { label: 'Logs', icon: <AlertIcon />, path: '/logs' },
+    { label: 'Logs', icon: <LogsIcon />, path: '/logs' },
     { label: 'Detection Rules', icon: <ShieldIcon />, path: '/detection-rules' },
     { label: 'Cases', icon: <CaseIcon />, path: '/cases' },
     { label: 'Evidence', icon: <EvidenceIcon />, path: '/evidence' },
-    { label: 'Alerts', icon: <AlertIcon />, path: '/alerts' },
+    { label: 'Forensics', icon: <ForensicsIcon />, path: '/forensics' },
+    { label: 'Timeline', icon: <TimelineIcon />, path: '/timeline' },
+    { label: 'MITRE', icon: <MitreIcon />, path: '/mitre' },
+    { label: 'Alerts', icon: <AlertBellIcon />, path: '/alerts' },
     { label: 'Reports', icon: <ReportIcon />, path: '/reports' },
   ];
 

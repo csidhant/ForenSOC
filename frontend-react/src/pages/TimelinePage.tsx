@@ -18,20 +18,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  TextField,
 } from '@mui/material';
-import { PictureAsPdf as PdfIcon } from '@mui/icons-material';
-import { Case, CaseReportRecord } from '@types/index';
+import { Timeline as TimelineIcon } from '@mui/icons-material';
+import { Case, TimelineEventRow } from '@types/index';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
 
-const ReportsPage: React.FC = () => {
+const TimelinePage: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
   const [caseId, setCaseId] = useState('');
-  const [rows, setRows] = useState<CaseReportRecord[]>([]);
-  const [title, setTitle] = useState('');
+  const [rows, setRows] = useState<TimelineEventRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [msg, setMsg] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -45,10 +44,10 @@ const ReportsPage: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const data = await apiService.listCaseReports(parseInt(caseId, 10));
+      const data = await apiService.listTimelineEvents(parseInt(caseId, 10), { limit: 300 });
       setRows(data || []);
     } catch {
-      setError('Failed to list reports');
+      setError('Failed to load timeline');
     } finally {
       setLoading(false);
     }
@@ -58,37 +57,30 @@ const ReportsPage: React.FC = () => {
     if (caseId) load();
   }, [caseId]);
 
-  const generate = async () => {
+  const rebuild = async () => {
     if (!caseId) return;
     try {
       setLoading(true);
       setError('');
-      await apiService.generateCasePdf(parseInt(caseId, 10), title || undefined);
-      setTitle('');
+      const r = await apiService.rebuildTimeline(parseInt(caseId, 10));
+      setMsg(r.message);
       await load();
     } catch {
-      setError('PDF generation failed');
+      setError('Rebuild failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const download = async (r: CaseReportRecord) => {
-    try {
-      await apiService.downloadReportPdf(r.id, `${r.report_number}.pdf`);
-    } catch {
-      setError('Download failed');
     }
   };
 
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <PdfIcon /> Reports
+        <TimelineIcon /> Timeline
       </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {msg && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMsg('')}>{msg}</Alert>}
       <Card sx={{ mb: 2 }}>
-        <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FormControl sx={{ minWidth: 280 }} size="small">
             <InputLabel>Case</InputLabel>
             <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
@@ -100,18 +92,11 @@ const ReportsPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <TextField
-            size="small"
-            label="Report title (optional)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            sx={{ minWidth: 240 }}
-          />
-          <Button variant="contained" onClick={generate} disabled={!caseId || loading}>
-            Generate PDF
-          </Button>
           <Button variant="outlined" onClick={load} disabled={!caseId || loading}>
-            Refresh list
+            Refresh
+          </Button>
+          <Button variant="contained" color="secondary" onClick={rebuild} disabled={!caseId || loading}>
+            Rebuild from alerts / logs / evidence
           </Button>
         </CardContent>
       </Card>
@@ -124,11 +109,11 @@ const ReportsPage: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Report #</TableCell>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Generated</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>Time</TableCell>
+                    <TableCell>Source</TableCell>
+                    <TableCell>Type</TableCell>
+                    <TableCell>Severity</TableCell>
+                    <TableCell>Description</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -136,20 +121,18 @@ const ReportsPage: React.FC = () => {
                     <TableRow>
                       <TableCell colSpan={5}>
                         <Typography color="text.secondary" align="center" py={2}>
-                          {caseId ? 'No reports yet for this case.' : 'Select a case.'}
+                          {caseId ? 'No timeline rows. Run Rebuild after adding alerts or logs.' : 'Select a case.'}
                         </Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
                     rows.map((r) => (
                       <TableRow key={r.id}>
-                        <TableCell>{r.report_number}</TableCell>
-                        <TableCell>{r.title}</TableCell>
-                        <TableCell>{r.status}</TableCell>
-                        <TableCell>{formatDateTime(r.generated_at)}</TableCell>
-                        <TableCell align="right">
-                          <Button size="small" onClick={() => download(r)}>Download PDF</Button>
-                        </TableCell>
+                        <TableCell>{formatDateTime(r.event_time)}</TableCell>
+                        <TableCell>{r.source}</TableCell>
+                        <TableCell>{r.event_type || '—'}</TableCell>
+                        <TableCell>{r.severity || '—'}</TableCell>
+                        <TableCell sx={{ maxWidth: 480 }}>{r.description}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -163,4 +146,4 @@ const ReportsPage: React.FC = () => {
   );
 };
 
-export default ReportsPage;
+export default TimelinePage;

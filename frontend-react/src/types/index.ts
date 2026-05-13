@@ -209,6 +209,76 @@ export interface EvidenceUploadResponse {
   message: string;
 }
 
+/** Timeline row from `/api/timeline/cases/{id}/events` */
+export interface TimelineEventRow {
+  id: number;
+  case_id: number;
+  event_time: string;
+  source: string;
+  event_type?: string | null;
+  severity?: string | null;
+  description: string;
+  details?: Record<string, unknown> | null;
+  related_alert_id?: number | null;
+  related_evidence_id?: number | null;
+  related_normalized_event_id?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimelineRebuildResponse {
+  case_id: number;
+  events_created: number;
+  message: string;
+}
+
+/** Generated PDF report metadata */
+export interface CaseReportRecord {
+  id: number;
+  report_number: string;
+  case_id: number;
+  report_type: string;
+  title: string;
+  file_path: string;
+  file_size?: number | null;
+  file_hash?: string | null;
+  generated_at: string;
+  generated_by?: number | null;
+  report_date?: string | null;
+  status: string;
+  is_confidential: boolean;
+  included_sections?: unknown;
+  total_pages?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportGenerateResponse {
+  report: CaseReportRecord;
+  message: string;
+}
+
+export interface ForensicsJobResponse {
+  evidence_id: number;
+  message: string;
+  pcap_analysis_id?: number | null;
+  volatility_result_ids?: number[] | null;
+}
+
+export interface MitreTechniqueCount {
+  technique_id: string;
+  technique: string;
+  tactic?: string | null;
+  count: number;
+}
+
+export interface MitreCaseSummary {
+  case_id: number;
+  techniques: MitreTechniqueCount[];
+  mapping_rows: number;
+  alerts_with_mitre: number;
+}
+
 // Event Types
 export interface Event {
   id: string;

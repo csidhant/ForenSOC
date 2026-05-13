@@ -18,20 +18,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  TextField,
+  Chip,
 } from '@mui/material';
-import { PictureAsPdf as PdfIcon } from '@mui/icons-material';
-import { Case, CaseReportRecord } from '@types/index';
+import { Security as SecurityIcon } from '@mui/icons-material';
+import { Case, MitreCaseSummary } from '@types/index';
 import { apiService } from '@services/apiService';
-import { formatDateTime } from '@utils/helpers';
 
-const ReportsPage: React.FC = () => {
+const MitrePage: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
   const [caseId, setCaseId] = useState('');
-  const [rows, setRows] = useState<CaseReportRecord[]>([]);
-  const [title, setTitle] = useState('');
+  const [summary, setSummary] = useState<MitreCaseSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -45,10 +44,11 @@ const ReportsPage: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const data = await apiService.listCaseReports(parseInt(caseId, 10));
-      setRows(data || []);
+      const s = await apiService.getMitreCaseSummary(parseInt(caseId, 10));
+      setSummary(s);
     } catch {
-      setError('Failed to list reports');
+      setError('Failed to load MITRE summary');
+      setSummary(null);
     } finally {
       setLoading(false);
     }
@@ -58,37 +58,29 @@ const ReportsPage: React.FC = () => {
     if (caseId) load();
   }, [caseId]);
 
-  const generate = async () => {
+  const sync = async () => {
     if (!caseId) return;
     try {
       setLoading(true);
-      setError('');
-      await apiService.generateCasePdf(parseInt(caseId, 10), title || undefined);
-      setTitle('');
+      const r = await apiService.syncMitreMappings(parseInt(caseId, 10));
+      setInfo(`Synced ${r.mappings_created} mapping rows`);
       await load();
     } catch {
-      setError('PDF generation failed');
+      setError('Sync failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const download = async (r: CaseReportRecord) => {
-    try {
-      await apiService.downloadReportPdf(r.id, `${r.report_number}.pdf`);
-    } catch {
-      setError('Download failed');
     }
   };
 
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <PdfIcon /> Reports
+        <SecurityIcon /> MITRE ATT&CK
       </Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {info && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setInfo('')}>{info}</Alert>}
       <Card sx={{ mb: 2 }}>
-        <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FormControl sx={{ minWidth: 280 }} size="small">
             <InputLabel>Case</InputLabel>
             <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
@@ -100,21 +92,20 @@ const ReportsPage: React.FC = () => {
               ))}
             </Select>
           </FormControl>
-          <TextField
-            size="small"
-            label="Report title (optional)"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            sx={{ minWidth: 240 }}
-          />
-          <Button variant="contained" onClick={generate} disabled={!caseId || loading}>
-            Generate PDF
-          </Button>
-          <Button variant="outlined" onClick={load} disabled={!caseId || loading}>
-            Refresh list
+          <Button variant="outlined" onClick={load} disabled={!caseId || loading}>Refresh</Button>
+          <Button variant="contained" onClick={sync} disabled={!caseId || loading}>
+            Sync mappings from alerts
           </Button>
         </CardContent>
       </Card>
+      {summary && (
+        <Card sx={{ mb: 2 }}>
+          <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Chip label={`Alerts with MITRE: ${summary.alerts_with_mitre}`} />
+            <Chip label={`DB mapping rows: ${summary.mapping_rows}`} color="primary" variant="outlined" />
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardContent>
           {loading ? (
@@ -124,32 +115,28 @@ const ReportsPage: React.FC = () => {
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Report #</TableCell>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Generated</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                    <TableCell>Technique ID</TableCell>
+                    <TableCell>Technique</TableCell>
+                    <TableCell>Tactic</TableCell>
+                    <TableCell align="right">Alert count</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.length === 0 ? (
+                  {!summary || summary.techniques.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5}>
+                      <TableCell colSpan={4}>
                         <Typography color="text.secondary" align="center" py={2}>
-                          {caseId ? 'No reports yet for this case.' : 'Select a case.'}
+                          No MITRE-tagged alerts for this case yet.
                         </Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    rows.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>{r.report_number}</TableCell>
-                        <TableCell>{r.title}</TableCell>
-                        <TableCell>{r.status}</TableCell>
-                        <TableCell>{formatDateTime(r.generated_at)}</TableCell>
-                        <TableCell align="right">
-                          <Button size="small" onClick={() => download(r)}>Download PDF</Button>
-                        </TableCell>
+                    summary.techniques.map((t, i) => (
+                      <TableRow key={`${t.technique_id}-${i}-${t.tactic || ''}`}>
+                        <TableCell>{t.technique_id}</TableCell>
+                        <TableCell>{t.technique}</TableCell>
+                        <TableCell>{t.tactic || '—'}</TableCell>
+                        <TableCell align="right">{t.count}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -163,4 +150,4 @@ const ReportsPage: React.FC = () => {
   );
 };
 
-export default ReportsPage;
+export default MitrePage;

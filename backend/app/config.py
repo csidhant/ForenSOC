@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = "admin@forensoc.local"
     ADMIN_PASSWORD: str = "admin123"
     DEFAULT_USER_ROLE: str = "viewer"
+
+    # Celery / Redis (async forensics)
+    REDIS_URL: str = "redis://127.0.0.1:6379/0"
     
     class Config:
         """Configuration settings."""

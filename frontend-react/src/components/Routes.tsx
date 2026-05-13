@@ -12,6 +12,9 @@ import AlertsPage from '@pages/AlertsPage';
 import LogExplorerPage from '@pages/LogExplorerPage';
 import DetectionRulesPage from '@pages/DetectionRulesPage';
 import EvidenceVaultPage from '@pages/EvidenceVaultPage';
+import ForensicsPage from '@pages/ForensicsPage';
+import TimelinePage from '@pages/TimelinePage';
+import MitrePage from '@pages/MitrePage';
 import ReportsPage from '@pages/ReportsPage';
 import SettingsPage from '@pages/SettingsPage';
 import NotFoundPage from '@pages/NotFoundPage';
@@ -58,6 +61,30 @@ const Routes: React.FC = () => {
       element: (
         <ProtectedRoute>
           <EvidenceVaultPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/forensics',
+      element: (
+        <ProtectedRoute>
+          <ForensicsPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/timeline',
+      element: (
+        <ProtectedRoute>
+          <TimelinePage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/mitre',
+      element: (
+        <ProtectedRoute>
+          <MitrePage />
         </ProtectedRoute>
       ),
     },
