@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api"
     
     # Database
-    DATABASE_URL: str = "sqlite:///./test.db"  # Default SQLite for MVP
+    DATABASE_URL: str = "sqlite:///./forensoc.db"  # Default SQLite for MVP
     DATABASE_ECHO: bool = False
     
     # Security
@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     # Initial admin credentials for development
     ADMIN_USERNAME: str = "admin"
     ADMIN_EMAIL: str = "admin@forensoc.local"
-    ADMIN_PASSWORD: str = "admin123"
+    ADMIN_PASSWORD: str = "admin"
     DEFAULT_USER_ROLE: str = "viewer"
 
     # Celery / Redis (async forensics)

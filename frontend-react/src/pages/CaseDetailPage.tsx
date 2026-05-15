@@ -19,7 +19,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { Case, EvidenceItem, TimelineEventRow, CaseReportRecord } from '@types/index';
+import { Case, EvidenceItem, TimelineEventRow, CaseReportRecord } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
 

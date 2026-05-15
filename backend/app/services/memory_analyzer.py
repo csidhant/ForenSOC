@@ -53,12 +53,23 @@ def analyze_memory_dump(
         except subprocess.TimeoutExpired:
             out_text = f"# Plugin {plugin} timed out"
 
+        # Basic suspicious indicator detection
+        indicators = []
+        if "powershell" in out_text.lower() and ("-enc" in out_text.lower() or "hidden" in out_text.lower()):
+            indicators.append("Encoded or hidden PowerShell process detected")
+        if "cmd.exe" in out_text.lower() and ("winword.exe" in out_text.lower() or "excel.exe" in out_text.lower()):
+            indicators.append("Office application spawning cmd.exe detected")
+        if "lsass.exe" in out_text.lower() and plugin == "windows.netstat":
+            indicators.append("LSASS process making network connections (suspicious)")
+        if "malfind" in plugin and "MZ" in out_text:
+            indicators.append("Potential injected code (malfind match)")
+
         vr = VolatilityResult(
             evidence_id=evidence_id,
             memory_dump_name=ev.filename,
             plugin_name=plugin,
             plugin_output=out_text[:200000],
-            suspicious_indicators=None,
+            suspicious_indicators=",".join(indicators) if indicators else None,
             analyzed_by=analyzed_by,
         )
         db.add(vr)

@@ -76,7 +76,7 @@ async def list_alerts(
     
     Analysts see alerts assigned to them, admins see all alerts.
     """
-    if current_user.role.name.lower() == "admin":
+    if current_user.role.name.lower() in ["admin", "viewer"]:
         alerts = AlertCRUD.get_all_alerts(
             db,
             skip=skip,
@@ -485,7 +485,7 @@ async def get_alert_statistics(
     Get alert statistics overview.
     """
     # Get all alerts the user can see
-    if current_user.role.name.lower() == "admin":
+    if current_user.role.name.lower() in ["admin", "viewer"]:
         alerts = AlertCRUD.get_all_alerts(db, skip=0, limit=10000)
     else:
         alerts = AlertCRUD.get_alerts_assigned_to(db, current_user.id, skip=0, limit=10000)

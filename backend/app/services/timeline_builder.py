@@ -11,6 +11,7 @@ from app.crud import timeline as timeline_crud
 from app.models.alert import Alert
 from app.models.evidence import Evidence, ChainOfCustody
 from app.models.event import NormalizedEvent
+from app.models.forensics import YaraResult, VolatilityResult
 from app.models.timeline import TimelineEvent
 
 
@@ -105,6 +106,48 @@ def rebuild_case_timeline(db: Session, case_id: int) -> int:
                 description=(c.details or c.action)[:4000],
                 details={"evidence_id": c.evidence_id, "tool": c.tool_used},
                 related_evidence_id=c.evidence_id,
+            )
+        )
+
+    # Add YARA Results
+    yara_rows = (
+        db.query(YaraResult)
+        .join(Evidence, YaraResult.evidence_id == Evidence.id)
+        .filter(Evidence.case_id == case_id, YaraResult.matched == True)
+        .all()
+    )
+    for y in yara_rows:
+        rows.append(
+            TimelineEvent(
+                case_id=case_id,
+                event_time=y.scan_time or datetime.utcnow(),
+                source="yara",
+                event_type="malware_match",
+                severity=y.rule_severity or "High",
+                description=f"YARA Match: {y.rule_name} on evidence {y.evidence_id}",
+                details={"rule": y.rule_name, "evidence_id": y.evidence_id},
+                related_evidence_id=y.evidence_id,
+            )
+        )
+
+    # Add Volatility Results
+    vol_rows = (
+        db.query(VolatilityResult)
+        .join(Evidence, VolatilityResult.evidence_id == Evidence.id)
+        .filter(Evidence.case_id == case_id)
+        .all()
+    )
+    for v in vol_rows:
+        rows.append(
+            TimelineEvent(
+                case_id=case_id,
+                event_time=v.analysis_time or datetime.utcnow(),
+                source="volatility",
+                event_type="memory_analysis",
+                severity="Medium" if v.suspicious_indicators else "Info",
+                description=f"Memory Analysis: {v.plugin_name} on {v.evidence_id}",
+                details={"plugin": v.plugin_name, "indicators": v.suspicious_indicators},
+                related_evidence_id=v.evidence_id,
             )
         )
 

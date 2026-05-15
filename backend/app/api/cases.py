@@ -8,7 +8,7 @@ from typing import List, Optional
 from app.database import get_db
 from app.schemas.case import (
     CaseCreate, CaseUpdate, CaseResponse, CaseDetailResponse,
-    CaseNoteCreate, CaseNoteUpdate, CaseNoteResponse
+    CaseNoteCreate, CaseNoteUpdate, CaseNoteResponse, BulkCaseAssign
 )
 from app.crud.case import CaseCRUD, CaseNoteCRUD
 from app.crud.alert import AlertCRUD
@@ -16,6 +16,7 @@ from app.api.dependencies import (
     get_current_user, get_current_analyst_user, check_case_access
 )
 from app.models.user import User
+from app.services.audit_logger import AuditLogger
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
 
@@ -48,6 +49,16 @@ async def create_case(
         priority=case_data.priority
     )
     
+    # Log action
+    AuditLogger.log(
+        db, 
+        action="CASE_CREATED", 
+        user=current_user, 
+        resource_type="case", 
+        resource_id=str(new_case.id),
+        details=f"Created case {new_case.case_number}: {new_case.title}"
+    )
+    
     return CaseResponse.from_orm(new_case)
 
 
@@ -65,7 +76,7 @@ async def list_cases(
     
     Analysts see their own cases, admins see all cases.
     """
-    if current_user.role.name.lower() == "admin":
+    if current_user.role.name.lower() in ["admin", "viewer"]:
         cases = CaseCRUD.get_all_cases(
             db, skip=skip, limit=limit, status=status, severity=severity
         )
@@ -149,6 +160,16 @@ async def update_case(
         priority=case_data.priority
     )
     
+    # Log action
+    AuditLogger.log(
+        db, 
+        action="CASE_UPDATED", 
+        user=current_user, 
+        resource_type="case", 
+        resource_id=str(updated_case.id),
+        details=f"Updated case {updated_case.case_number}"
+    )
+    
     return CaseResponse.from_orm(updated_case)
 
 
@@ -176,6 +197,16 @@ async def delete_case(
         )
     
     CaseCRUD.delete_case(db, case_id)
+
+    # Log action
+    AuditLogger.log(
+        db, 
+        action="CASE_DELETED", 
+        user=current_user, 
+        resource_type="case", 
+        resource_id=str(case_id),
+        details=f"Deleted case {case.case_number}"
+    )
 
 
 # Case Notes endpoints
@@ -323,6 +354,39 @@ async def close_case(
         )
     
     return CaseResponse.from_orm(case)
+
+
+@router.post("/bulk-assign", status_code=status.HTTP_200_OK)
+async def bulk_assign_cases(
+    assign_data: BulkCaseAssign,
+    current_user: User = Depends(get_current_analyst_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Assign multiple cases to a specific analyst (Admin only).
+    """
+    if current_user.role.name.lower() != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only admins can bulk assign cases"
+        )
+    
+    updated_count = 0
+    for case_id in assign_data.case_ids:
+        case = CaseCRUD.get_case(db, case_id)
+        if case:
+            CaseCRUD.update_case(db, case_id, assigned_to=assign_data.assigned_to)
+            updated_count += 1
+    
+    # Log action
+    AuditLogger.log(
+        db, 
+        action="BULK_CASE_ASSIGN", 
+        user=current_user, 
+        details=f"Assigned {updated_count} cases to user {assign_data.assigned_to}"
+    )
+    
+    return {"message": f"Successfully assigned {updated_count} cases"}
 
 
 @router.post("/{case_id}/reopen", response_model=CaseResponse)

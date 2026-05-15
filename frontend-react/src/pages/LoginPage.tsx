@@ -103,10 +103,10 @@ const LoginPage: React.FC = () => {
             </Button>
 
             <Typography variant="caption" sx={{ textAlign: 'center', opacity: 0.6 }}>
-              Demo credentials: admin / password
+              Demo credentials: admin / admin
             </Typography>
             <Typography variant="body2" sx={{ textAlign: 'center', mt: 1 }}>
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link component={RouterLink} to="/register">
                 Register now
               </Link>

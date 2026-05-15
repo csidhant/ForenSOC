@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -33,10 +32,11 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   PlayArrow as PlayArrowIcon,
+  FileUpload as ImportIcon,
 } from '@mui/icons-material';
-import { DetectionRule, AlertSeverity } from '@types/index';
+import { DetectionRule, AlertSeverity } from '../types';
 import { apiService } from '@services/apiService';
-import { formatDate } from '@utils/helpers';
+
 
 const DetectionRulesPage: React.FC = () => {
   const [rules, setRules] = useState<DetectionRule[]>([]);
@@ -48,7 +48,7 @@ const DetectionRulesPage: React.FC = () => {
     name: '',
     description: '',
     enabled: true,
-    severity: 'medium' as AlertSeverity,
+    severity: AlertSeverity.MEDIUM,
     rule_type: '',
     pattern: '{}',
     event_type: '',
@@ -58,6 +58,8 @@ const DetectionRulesPage: React.FC = () => {
     mitre_technique: '',
     mitre_id: '',
   });
+  const [sigmaDialogOpen, setSigmaDialogOpen] = useState(false);
+  const [sigmaYaml, setSigmaYaml] = useState('');
 
   useEffect(() => {
     loadRules();
@@ -99,7 +101,7 @@ const DetectionRulesPage: React.FC = () => {
         name: '',
         description: '',
         enabled: true,
-        severity: 'medium',
+        severity: AlertSeverity.MEDIUM,
         rule_type: '',
         pattern: '{"event_type": "failed_login"}',
         event_type: '',
@@ -175,6 +177,21 @@ const DetectionRulesPage: React.FC = () => {
     }
   };
 
+  const handleImportSigma = async () => {
+    try {
+      setLoading(true);
+      await apiService.uploadSigmaRule(sigmaYaml);
+      setSigmaDialogOpen(false);
+      setSigmaYaml('');
+      await loadRules();
+      alert('Sigma rule imported successfully');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to import Sigma rule');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {
       case 'critical': return 'error';
@@ -206,6 +223,14 @@ const DetectionRulesPage: React.FC = () => {
             onClick={handleRunScan}
           >
             Run Scan
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<ImportIcon />}
+            onClick={() => setSigmaDialogOpen(true)}
+            color="secondary"
+          >
+            Import Sigma
           </Button>
           <Button
             variant="contained"
@@ -415,6 +440,35 @@ const DetectionRulesPage: React.FC = () => {
             disabled={!formData.name || !formData.rule_type}
           >
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={sigmaDialogOpen} onClose={() => setSigmaDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Import Sigma Rule (YAML)</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Paste the contents of a Sigma YAML rule file below to import it as a ForenSOC detection rule.
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            rows={15}
+            placeholder="title: Suspicious PowerShell Execution..."
+            value={sigmaYaml}
+            onChange={(e) => setSigmaYaml(e.target.value)}
+            sx={{ fontFamily: 'monospace' }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSigmaDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleImportSigma} 
+            variant="contained" 
+            color="secondary"
+            disabled={!sigmaYaml.trim() || loading}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Import Rule'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -16,6 +16,7 @@ import ForensicsPage from '@pages/ForensicsPage';
 import TimelinePage from '@pages/TimelinePage';
 import MitrePage from '@pages/MitrePage';
 import ReportsPage from '@pages/ReportsPage';
+import AuditLogsPage from '@pages/AuditLogsPage';
 import SettingsPage from '@pages/SettingsPage';
 import NotFoundPage from '@pages/NotFoundPage';
 
@@ -125,6 +126,14 @@ const Routes: React.FC = () => {
       element: (
         <ProtectedRoute>
           <ReportsPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/audit',
+      element: (
+        <ProtectedRoute>
+          <AuditLogsPage />
         </ProtectedRoute>
       ),
     },

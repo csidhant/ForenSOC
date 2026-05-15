@@ -15,7 +15,7 @@ import {
   Grid,
 } from '@mui/material';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
-import { Case, ForensicsJobResponse } from '@types/index';
+import { Case, ForensicsJobResponse } from '../types';
 import { apiService } from '@services/apiService';
 
 const ForensicsPage: React.FC = () => {

@@ -84,13 +84,13 @@ async def get_current_analyst_user(
     Dependency to get current authenticated user and verify analyst role.
     
     Raises:
-        HTTPException: If user is not an analyst or admin
+        HTTPException: If user is not an analyst, admin, or viewer
     """
-    allowed_roles = ["analyst", "investigator", "admin"]
+    allowed_roles = ["analyst", "investigator", "admin", "viewer"]
     if current_user.role.name.lower() not in allowed_roles:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Analyst access required"
+            detail="Analyst or Viewer access required"
         )
     
     return current_user
@@ -105,13 +105,13 @@ def check_case_access(
     Check if user has access to a case.
     
     Returns True if:
-    - User is admin
+    - User is admin or viewer
     - User created the case
     - User is assigned to the case
     """
     from app.crud.case import CaseCRUD
     
-    if user.role.name.lower() == "admin":
+    if user.role.name.lower() in ["admin", "viewer"]:
         return True
     
     case = CaseCRUD.get_case(db, case_id)
@@ -133,13 +133,13 @@ def check_alert_access(
     Check if user has access to an alert.
     
     Returns True if:
-    - User is admin
+    - User is admin or viewer
     - User created the alert
     - User is assigned to the alert
     """
     from app.crud.alert import AlertCRUD
     
-    if user.role.name.lower() == "admin":
+    if user.role.name.lower() in ["admin", "viewer"]:
         return True
     
     alert = AlertCRUD.get_alert(db, alert_id)

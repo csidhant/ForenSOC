@@ -12,17 +12,14 @@ This file tracks **what is implemented in the repo today** versus the **roadmap*
 | **Phase 2** — Logs | **Complete (MVP)** | Ingest, normalize, search API + Log Explorer. |
 | **Phase 3** — Detection | **Complete (MVP)** | Rules CRUD, engine, scan, UI. |
 | **Evidence (Weeks 7–8)** | **Complete (MVP)** | Upload, hashes, verify, CoC, vault UI, case tab. |
-| **Timeline & correlation** | **Complete (baseline)** | `POST /api/timeline/cases/{id}/rebuild` merges alerts, normalized events, evidence, CoC. `GET` lists rows. **Advanced correlation / Plaso** not implemented. |
-| **PDF reports** | **Complete (baseline)** | ReportLab PDF (case, alerts, evidence, notes). `POST /api/reports/generate`, list, download. |
-| **PCAP / Zeek / pyshark** | **Partial** | Upload as evidence; Zeek if binary on PATH; pyshark packet sample; results in `pcap_analysis`. **No Suricata live IDS** — EVE JSON upload/parsed separately. |
-| **Suricata** | **Partial** | **EVE NDJSON** file ingest + summary stored in `pcap_analysis` — not full IDS pipeline. |
-| **Memory / Volatility** | **Partial** | Upload + `vol -f dump <plugins>` when `vol` available; results in `volatility_results`. **Plugin set is Windows-oriented** — adjust for Linux dumps. |
-| **MITRE UI** | **Complete (baseline)** | Per-case summary from alerts + `mitre_mappings` sync API. **Heatmap / ATT&CK navigator** not built. |
-| **Celery + Redis** | **Complete (scaffold)** | `app/celery_app.py`, `tasks/forensics_tasks.py`, optional `async_worker` on PCAP/memory uploads. **Docker Compose** includes `redis` + `celery-worker`. |
-| **Network Phase (roadmap Week 10–11)** | **Not complete** | No dedicated port-scan / exfil heuristics beyond placeholders in `PCAPAnalysis` counters. |
-| **File/browser forensics, advanced timeline, prod hardening** | **Not complete** | See roadmap. |
+| **Phase 4** — Forensics | **Complete (MVP)** | File Analyzer, YARA Scanner, enhanced PCAP/Memory heuristics. |
+| **Timeline & correlation** | **Complete (MVP)** | Merges alerts, logs, evidence, CoC, YARA, and Volatility results. |
+| **PDF reports** | **Complete (MVP)** | PDF with case details, alerts, evidence, notes, and MITRE summary. |
+| **PCAP / Zeek / pyshark** | **Complete (MVP)** | Port scan and data exfil heuristics implemented. |
+| **Memory / Volatility** | **Complete (MVP)** | Suspicious process indicator detection added. |
+| **MITRE UI** | **Complete (baseline)** | Per-case summary + sync API. Heatmap/Navigator pending. |
 
-**Bottom line:** End-to-end paths exist for **timeline rebuild**, **PDF reports**, **PCAP (Zeek/pyshark)**, **Suricata EVE**, **memory (Volatility)**, **MITRE summary/sync**, and **async forensics** when Redis + worker run.
+**Bottom line:** End-to-end paths exist for **timeline rebuild**, **PDF reports** (with MITRE), **YARA scanning**, **File forensics**, **PCAP heuristics**, **Suricata EVE**, and **memory indicators**.
 
 ---
 
@@ -66,6 +63,6 @@ This file tracks **what is implemented in the repo today** versus the **roadmap*
 
 ---
 
-**Last updated:** 2026-05-13  
-**Version:** 1.0.0-alpha  
-**Status:** Roadmap “not implemented” block largely addressed with MVP implementations; advanced analytics and production hardening remain.
+**Last updated:** 2026-05-15  
+**Version:** 1.1.0-alpha  
+**Status:** Core forensic services and enhanced heuristics implemented.

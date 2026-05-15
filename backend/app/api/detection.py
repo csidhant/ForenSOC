@@ -11,6 +11,7 @@ from app.schemas.detection import (
     DetectionAlertResponse, DetectionScanRequest, DetectionScanResponse
 )
 from app.services.detection_engine import DetectionEngine, RuleManager
+from app.services.sigma_loader import SigmaLoader
 from app.api.dependencies import get_current_analyst_user
 from app.models.user import User
 
@@ -37,6 +38,25 @@ async def create_detection_rule(
 
     rule = rule_manager.create_rule(rule_data.dict(), current_user.id)
     return DetectionRuleResponse.from_orm(rule)
+
+
+@router.post("/rules/sigma", response_model=DetectionRuleResponse, status_code=status.HTTP_201_CREATED)
+async def upload_sigma_rule(
+    yaml_content: str,
+    current_user: User = Depends(get_current_analyst_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Import a Sigma rule from YAML content.
+    """
+    try:
+        rule = SigmaLoader.import_sigma_rule(db, yaml_content, created_by=current_user.id)
+        return DetectionRuleResponse.from_orm(rule)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
 
 
 @router.get("/rules", response_model=List[DetectionRuleResponse])

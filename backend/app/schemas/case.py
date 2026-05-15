@@ -87,3 +87,9 @@ class CaseDetailResponse(CaseResponse):
     
     class Config:
         from_attributes = True
+
+
+class BulkCaseAssign(BaseModel):
+    """Schema for bulk case assignment."""
+    case_ids: List[int]
+    assigned_to: int

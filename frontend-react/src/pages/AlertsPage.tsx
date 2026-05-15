@@ -25,19 +25,13 @@ import {
   Select,
   FormControl,
   InputLabel,
-  DialogContentText,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Assignment as AssignmentIcon,
-  CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Link as LinkIcon,
-  Unlink as UnlinkIcon,
 } from '@mui/icons-material';
-import { Alert as AlertType, AlertSeverity, AlertStatus, Case } from '@types/index';
+import { Alert as AlertType, AlertSeverity, Case } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDate, getStatusColor } from '@utils/helpers';
 
@@ -51,7 +45,7 @@ const AlertsPage: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    severity: 'medium' as AlertSeverity,
+    severity: AlertSeverity.MEDIUM,
     alert_type: '',
     source_ip: '',
     dest_ip: '',
@@ -121,7 +115,7 @@ const AlertsPage: React.FC = () => {
       setFormData({
         title: '',
         description: '',
-        severity: 'medium',
+        severity: AlertSeverity.MEDIUM,
         alert_type: '',
         source_ip: '',
         dest_ip: '',
@@ -146,7 +140,7 @@ const AlertsPage: React.FC = () => {
         ...formData,
         source_port: formData.source_port ? parseInt(formData.source_port) : undefined,
         dest_port: formData.dest_port ? parseInt(formData.dest_port) : undefined,
-        case_id: formData.case_id ? parseInt(formData.case_id) : undefined,
+        case_id: formData.case_id ? formData.case_id : undefined,
         alert_number: editingAlert ? undefined : `ALERT-${Date.now()}`, // Generate alert number for new alerts
       };
 
@@ -175,34 +169,6 @@ const AlertsPage: React.FC = () => {
     }
   };
 
-  const handleStatusChange = async (alert: AlertType, newStatus: AlertStatus) => {
-    try {
-      if (newStatus === 'resolved') {
-        await apiService.closeAlert(alert.id);
-      } else if (newStatus === 'false_positive') {
-        await apiService.markAlertFalsePositive(alert.id);
-      } else {
-        await apiService.updateAlert(alert.id, { status: newStatus });
-      }
-      loadAlerts();
-      loadStats();
-    } catch (err: any) {
-      setError('Failed to update alert status');
-    }
-  };
-
-  const handleAssignToCase = async (alertId: string, caseId: string) => {
-    try {
-      if (caseId) {
-        await apiService.linkAlertToCase(alertId, caseId);
-      } else {
-        await apiService.unlinkAlertFromCase(alertId);
-      }
-      loadAlerts();
-    } catch (err: any) {
-      setError('Failed to link alert to case');
-    }
-  };
 
   const getSeverityColor = (severity: AlertSeverity) => {
     switch (severity) {

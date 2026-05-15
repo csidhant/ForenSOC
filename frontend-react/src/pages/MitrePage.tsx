@@ -21,7 +21,8 @@ import {
   Chip,
 } from '@mui/material';
 import { Security as SecurityIcon } from '@mui/icons-material';
-import { Case, MitreCaseSummary } from '@types/index';
+import { Tooltip } from '@mui/material';
+import { Case, MitreCaseSummary } from '../types';
 import { apiService } from '@services/apiService';
 
 const MitrePage: React.FC = () => {
@@ -31,6 +32,8 @@ const MitrePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  const [globalTechniques, setGlobalTechniques] = useState<any[]>([]);
+  const [showGlobal, setShowGlobal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -72,6 +75,19 @@ const MitrePage: React.FC = () => {
     }
   };
 
+  const loadGlobal = async () => {
+    try {
+      setLoading(true);
+      const data = await apiService.getMitreGlobalHeatmap();
+      setGlobalTechniques(data || []);
+      setShowGlobal(true);
+    } catch {
+      setError('Failed to load global heatmap');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Box>
       <Typography variant="h4" sx={{ mb: 2, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -95,6 +111,17 @@ const MitrePage: React.FC = () => {
           <Button variant="outlined" onClick={load} disabled={!caseId || loading}>Refresh</Button>
           <Button variant="contained" onClick={sync} disabled={!caseId || loading}>
             Sync mappings from alerts
+          </Button>
+          <Button 
+            variant="outlined" 
+            color="secondary" 
+            onClick={() => {
+              if (showGlobal) setShowGlobal(false);
+              else loadGlobal();
+            }}
+            disabled={loading}
+          >
+            {showGlobal ? 'Show Case Summary' : 'Global Heatmap'}
           </Button>
         </CardContent>
       </Card>
@@ -146,6 +173,38 @@ const MitrePage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      {showGlobal && (
+        <Card sx={{ mt: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>Global MITRE ATT&CK Heatmap</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Technique frequency across all cases. Darker colors indicate higher occurrence.
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {globalTechniques.map((t) => (
+                <Tooltip key={t.technique_id} title={`${t.technique_id}: ${t.technique} (${t.count} hits)`}>
+                  <Box
+                    sx={{
+                      p: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                      minWidth: 100,
+                      textAlign: 'center',
+                      bgcolor: t.count > 10 ? 'error.dark' : t.count > 5 ? 'error.main' : t.count > 2 ? 'warning.main' : 'success.main',
+                      color: 'white',
+                      cursor: 'help'
+                    }}
+                  >
+                    <Typography variant="caption" sx={{ fontWeight: 'bold', display: 'block' }}>{t.technique_id}</Typography>
+                    <Typography variant="h6">{t.count}</Typography>
+                  </Box>
+                </Tooltip>
+              ))}
+            </Box>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 };

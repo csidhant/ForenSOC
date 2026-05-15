@@ -34,8 +34,10 @@ import {
   Download as DownloadIcon,
   History as HistoryIcon,
   Delete as DeleteIcon,
+  Search as SearchIcon,
+  Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
-import { EvidenceItem, ChainOfCustodyEntry, Case } from '@types/index';
+import { EvidenceItem, ChainOfCustodyEntry, Case } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
 
@@ -54,6 +56,11 @@ const EvidenceVaultPage: React.FC = () => {
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadDescription, setUploadDescription] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [yaraOpen, setYaraOpen] = useState(false);
+  const [yaraResults, setYaraResults] = useState<any[]>([]);
+  const [yaraTitle, setYaraTitle] = useState('');
+  const [fileAnalysisOpen, setFileAnalysisOpen] = useState(false);
+  const [fileFindings, setFileFindings] = useState<any>(null);
 
   const loadEvidence = async () => {
     try {
@@ -148,6 +155,35 @@ const EvidenceVaultPage: React.FC = () => {
       await loadEvidence();
     } catch {
       setError('Delete failed');
+    }
+  };
+
+  const handleYaraScan = async (id: number) => {
+    try {
+      setLoading(true);
+      await apiService.runYaraScan(id);
+      const results = await apiService.getEvidenceYaraResults(id);
+      setYaraResults(results);
+      const ev = items.find((i) => i.id === id);
+      setYaraTitle(ev?.filename || String(id));
+      setYaraOpen(true);
+    } catch {
+      setError('YARA scan failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFileAnalysis = async (id: number) => {
+    try {
+      setLoading(true);
+      const res = await apiService.runFileAnalysis(id);
+      setFileFindings(res.findings);
+      setFileAnalysisOpen(true);
+    } catch {
+      setError('File analysis failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -272,6 +308,16 @@ const EvidenceVaultPage: React.FC = () => {
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title="YARA Scan">
+                            <IconButton size="small" color="primary" onClick={() => handleYaraScan(ev.id)}>
+                              <SearchIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="File Analysis">
+                            <IconButton size="small" color="secondary" onClick={() => handleFileAnalysis(ev.id)}>
+                              <AnalyticsIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                         </TableCell>
                       </TableRow>
                     ))
@@ -371,6 +417,93 @@ const EvidenceVaultPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCocOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={yaraOpen} onClose={() => setYaraOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>YARA Scan Results — {yaraTitle}</DialogTitle>
+        <DialogContent dividers>
+          {yaraResults.length === 0 ? (
+            <Typography>No YARA matches found.</Typography>
+          ) : (
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Rule Name</TableCell>
+                  <TableCell>Severity</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Matches</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {yaraResults.map((r) => (
+                  <TableRow key={r.id}>
+                    <TableCell><strong>{r.rule_name}</strong></TableCell>
+                    <TableCell>
+                      <Chip 
+                        size="small" 
+                        label={r.rule_severity} 
+                        color={r.rule_severity === 'Critical' || r.rule_severity === 'High' ? 'error' : 'warning'} 
+                      />
+                    </TableCell>
+                    <TableCell>{r.rule_category}</TableCell>
+                    <TableCell sx={{ fontSize: '0.7rem', whiteSpace: 'pre-wrap' }}>{r.matched_strings}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setYaraOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={fileAnalysisOpen} onClose={() => setFileAnalysisOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>File Forensic Analysis</DialogTitle>
+        <DialogContent dividers>
+          {fileFindings && (
+            <Box>
+              <Typography variant="subtitle2" color="text.secondary">Filename</Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>{fileFindings.filename}</Typography>
+              
+              <Typography variant="subtitle2" color="text.secondary">MIME Type / Description</Typography>
+              <Typography variant="body1" sx={{ mb: 1 }}>{fileFindings.mime_type} - {fileFindings.file_description}</Typography>
+              
+              <Typography variant="subtitle2" color="text.secondary">Timestamps (MAC)</Typography>
+              <Typography variant="body2">Modified: {fileFindings.modified_at}</Typography>
+              <Typography variant="body2" sx={{ mb: 1 }}>Accessed: {fileFindings.accessed_at}</Typography>
+              
+              <Typography variant="subtitle2" color="text.secondary">Security Flags</Typography>
+              <Box sx={{ mt: 1 }}>
+                <Chip 
+                  label={fileFindings.is_suspicious_extension ? "Suspicious Extension" : "Normal Extension"} 
+                  color={fileFindings.is_suspicious_extension ? "error" : "success"}
+                  size="small"
+                  sx={{ mr: 1 }}
+                />
+                <Chip 
+                  label={fileFindings.is_type_mismatch ? "MIME Mismatch" : "Type Matches"} 
+                  color={fileFindings.is_type_mismatch ? "error" : "success"}
+                  size="small"
+                />
+              </Box>
+              
+              {fileFindings.recommendations.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="primary">Recommendations</Typography>
+                  <ul>
+                    {fileFindings.recommendations.map((r: string, i: number) => (
+                      <li key={i}><Typography variant="body2">{r}</Typography></li>
+                    ))}
+                  </ul>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFileAnalysisOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

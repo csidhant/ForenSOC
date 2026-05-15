@@ -5,7 +5,7 @@ Test configuration and fixtures for ForenSOC tests.
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.database import Base
+from app.models.base import Base
 from app.main import app
 from fastapi.testclient import TestClient
 

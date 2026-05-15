@@ -20,7 +20,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Timeline as TimelineIcon } from '@mui/icons-material';
-import { Case, TimelineEventRow } from '@types/index';
+import { Case, TimelineEventRow } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
 

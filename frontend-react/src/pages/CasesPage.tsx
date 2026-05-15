@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Card,
-  CardContent,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,10 +19,9 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Grid,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { Case, CaseStatus, Priority } from '@types/index';
+import { Case, Priority } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDate, getStatusColor } from '@utils/helpers';
 import { useNavigate } from 'react-router-dom';
@@ -37,7 +35,7 @@ const CasesPage: React.FC = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    priority: 'medium' as Priority,
+    priority: Priority.MEDIUM,
   });
   const navigate = useNavigate();
 
@@ -68,7 +66,7 @@ const CasesPage: React.FC = () => {
       });
     } else {
       setEditingCase(null);
-      setFormData({ title: '', description: '', priority: 'medium' });
+      setFormData({ title: '', description: '', priority: Priority.MEDIUM });
     }
     setOpenDialog(true);
   };

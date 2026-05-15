@@ -5,7 +5,7 @@ CRUD operations for raw and normalized event models.
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from app.models.event import RawEvent, NormalizedEvent
 
 
@@ -138,5 +138,26 @@ class EventCRUD:
         return query.order_by(NormalizedEvent.event_timestamp.desc()).offset(skip).limit(limit).all()
 
     @staticmethod
-    def get_normalized_by_raw_event(db: Session, raw_event_id: int) -> Optional[NormalizedEvent]:
-        return db.query(NormalizedEvent).filter(NormalizedEvent.raw_event_id == raw_event_id).first()
+    @staticmethod
+    def get_normalized_events_paginated(
+        db: Session,
+        skip: int = 0,
+        limit: int = 50,
+        **filters
+    ) -> Tuple[List[NormalizedEvent], int]:
+        """Get events and total count."""
+        query = db.query(NormalizedEvent)
+        
+        # Apply filters (simplified for bulk)
+        for key, value in filters.items():
+            if value is not None:
+                if key == "start_time":
+                    query = query.filter(NormalizedEvent.event_timestamp >= value)
+                elif key == "end_time":
+                    query = query.filter(NormalizedEvent.event_timestamp <= value)
+                else:
+                    query = query.filter(getattr(NormalizedEvent, key) == value)
+        
+        total = query.count()
+        items = query.order_by(NormalizedEvent.event_timestamp.desc()).offset(skip).limit(limit).all()
+        return items, total

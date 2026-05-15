@@ -13,8 +13,8 @@ import {
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { apiService } from '@services/apiService';
-import { RegisterRequest } from '@types/index';
+import { apiService } from '../services/apiService';
+import { RegisterRequest } from '../types';
 
 const RegisterPage: React.FC = () => {
   const [form, setForm] = useState<RegisterRequest>({

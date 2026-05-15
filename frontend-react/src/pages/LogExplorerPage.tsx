@@ -30,14 +30,13 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  IconButton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   ExpandMore as ExpandMoreIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
-import { RawEvent, NormalizedEvent } from '@types/index';
+import { RawEvent, NormalizedEvent } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDate } from '@utils/helpers';
 
@@ -104,7 +103,7 @@ const LogExplorerPage: React.FC = () => {
       if (searchFilters.case_id) params.case_id = searchFilters.case_id;
 
       const response = await apiService.getRawLogs(params);
-      setRawEvents(response.items || []);
+      setRawEvents(response || []);
     } catch (err: any) {
       setError('Failed to search raw events');
       console.error('Error:', err);
@@ -129,7 +128,7 @@ const LogExplorerPage: React.FC = () => {
       if (searchFilters.event_type) params.event_type = searchFilters.event_type;
 
       const response = await apiService.getNormalizedLogs(params);
-      setNormalizedEvents(response.items || []);
+      setNormalizedEvents(response || []);
     } catch (err: any) {
       setError('Failed to search normalized events');
       console.error('Error:', err);
@@ -146,7 +145,7 @@ const LogExplorerPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -155,11 +154,6 @@ const LogExplorerPage: React.FC = () => {
     setEventDialogOpen(true);
   };
 
-  const handleIngestLog = async () => {
-    // This would open a dialog for log ingestion
-    // For now, just show a placeholder
-    alert('Log ingestion dialog would open here');
-  };
 
   return (
     <Box>

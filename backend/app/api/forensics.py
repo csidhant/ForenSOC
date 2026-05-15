@@ -12,8 +12,8 @@ from app.crud import evidence as evidence_crud
 from app.models.forensics import PCAPAnalysis
 from app.models.user import User
 from app.schemas.evidence import EvidenceCreate
-from app.schemas.forensics import ForensicsJobResponse, PCAPAnalysisRead, VolatilityResultRead
-from app.services import memory_analyzer, pcap_analyzer, suricata_eve, upload_bytes
+from app.schemas.forensics import ForensicsJobResponse, PCAPAnalysisRead, VolatilityResultRead, YaraResultRead
+from app.services import memory_analyzer, pcap_analyzer, suricata_eve, upload_bytes, yara_scanner, file_analyzer
 
 router = APIRouter(prefix="/api/forensics", tags=["forensics"])
 settings = get_settings()
@@ -130,6 +130,65 @@ async def upload_and_analyze_suricata_eve(
         message="Suricata EVE JSON parsed into pcap_analysis row",
         pcap_analysis_id=row.id,
     )
+
+
+@router.post("/yara-scan/{evidence_id}", response_model=ForensicsJobResponse)
+async def scan_evidence_with_yara(
+    evidence_id: int,
+    current_user: User = Depends(get_current_analyst_user),
+    db: Session = Depends(get_db),
+):
+    """Run YARA scan on existing evidence."""
+    from app.api.dependencies import check_evidence_access
+    if not check_evidence_access(current_user, evidence_id, db):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    
+    try:
+        results = yara_scanner.scan_evidence(db, evidence_id, analyzed_by=current_user.id)
+        return ForensicsJobResponse(
+            evidence_id=evidence_id,
+            message=f"YARA scan complete: {len(results)} matches found",
+            yara_result_ids=[r.id for r in results]
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.get("/evidence/{evidence_id}/yara-results", response_model=List[YaraResultRead])
+async def list_yara_results(
+    evidence_id: int,
+    current_user: User = Depends(get_current_analyst_user),
+    db: Session = Depends(get_db),
+):
+    from app.api.dependencies import check_evidence_access
+    from app.models.forensics import YaraResult
+
+    if not check_evidence_access(current_user, evidence_id, db):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    rows = db.query(YaraResult).filter(YaraResult.evidence_id == evidence_id).all()
+    return [YaraResultRead.model_validate(r) for r in rows]
+
+
+@router.post("/file-analysis/{evidence_id}")
+async def run_file_analysis(
+    evidence_id: int,
+    current_user: User = Depends(get_current_analyst_user),
+    db: Session = Depends(get_db),
+):
+    """Run basic file analysis (magic, extensions, etc.) on existing evidence."""
+    from app.api.dependencies import check_evidence_access
+    if not check_evidence_access(current_user, evidence_id, db):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+    
+    try:
+        results = file_analyzer.analyze_file(db, evidence_id, analyzed_by=current_user.id)
+        return {
+            "evidence_id": evidence_id,
+            "message": "File analysis complete",
+            "findings": results
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @router.get("/pcap-analysis/{analysis_id}", response_model=PCAPAnalysisRead)

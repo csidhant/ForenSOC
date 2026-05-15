@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import {
   LoginRequest,
@@ -9,8 +10,6 @@ import {
   EvidenceItem,
   ChainOfCustodyEntry,
   Event,
-  Timeline,
-  Report,
   RawEvent,
   NormalizedEvent,
   LogIngestRequest,
@@ -23,7 +22,7 @@ import {
   ReportGenerateResponse,
   ForensicsJobResponse,
   MitreCaseSummary,
-} from '@types/index';
+} from '../types';
 
 class ApiService {
   private api: AxiosInstance;
@@ -228,6 +227,13 @@ class ApiService {
     return response.data;
   }
 
+  async uploadSigmaRule(yamlContent: string): Promise<DetectionRule> {
+    const response = await this.api.post<DetectionRule>('/detection/rules/sigma', yamlContent, {
+      headers: { 'Content-Type': 'text/plain' },
+    });
+    return response.data;
+  }
+
   // Evidence vault
   async searchEvidence(params?: {
     case_id?: number;
@@ -380,6 +386,21 @@ class ApiService {
     return response.data;
   }
 
+  async runYaraScan(evidenceId: number): Promise<ForensicsJobResponse> {
+    const response = await this.api.post<ForensicsJobResponse>(`/forensics/yara-scan/${evidenceId}`);
+    return response.data;
+  }
+
+  async getEvidenceYaraResults(evidenceId: number): Promise<any[]> {
+    const response = await this.api.get<any[]>(`/forensics/evidence/${evidenceId}/yara-results`);
+    return response.data;
+  }
+
+  async runFileAnalysis(evidenceId: number): Promise<any> {
+    const response = await this.api.post(`/forensics/file-analysis/${evidenceId}`);
+    return response.data;
+  }
+
   async getMitreCaseSummary(caseId: number): Promise<MitreCaseSummary> {
     const response = await this.api.get<MitreCaseSummary>(`/mitre/cases/${caseId}/summary`);
     return response.data;
@@ -387,6 +408,18 @@ class ApiService {
 
   async syncMitreMappings(caseId: number): Promise<{ case_id: number; mappings_created: number }> {
     const response = await this.api.post(`/mitre/cases/${caseId}/sync`);
+    return response.data;
+  }
+
+  async getMitreGlobalHeatmap(): Promise<any[]> {
+    const response = await this.api.get<any[]>('/mitre/global-heatmap');
+    return response.data;
+  }
+
+  async getAuditLogs(skip = 0, limit = 50): Promise<any[]> {
+    const response = await this.api.get('/audit', {
+      params: { skip, limit },
+    });
     return response.data;
   }
 

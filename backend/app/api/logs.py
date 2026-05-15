@@ -13,6 +13,7 @@ from app.schemas.event import (
     NormalizedEventResponse,
     LogIngestResponse,
 )
+from app.schemas.pagination import PaginatedResponse
 from app.crud.event import EventCRUD
 from app.services.log_parser import LogParserService
 from app.api.dependencies import get_current_analyst_user
@@ -128,7 +129,7 @@ async def list_normalized_events(
     """
     List normalized events with optional filters.
     """
-    events = EventCRUD.get_normalized_events(
+    items, total = EventCRUD.get_normalized_events_paginated(
         db,
         skip=skip,
         limit=limit,
@@ -142,7 +143,14 @@ async def list_normalized_events(
         start_time=start_time,
         end_time=end_time,
     )
-    return [NormalizedEventResponse.from_orm(event) for event in events]
+    
+    return PaginatedResponse(
+        items=[NormalizedEventResponse.from_orm(event) for event in items],
+        total=total,
+        page=(skip // limit) + 1,
+        size=limit,
+        pages=(total + limit - 1) // limit
+    )
 
 
 @router.get("/normalized/{normalized_event_id}", response_model=NormalizedEventResponse)

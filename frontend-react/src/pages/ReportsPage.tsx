@@ -21,7 +21,7 @@ import {
   TextField,
 } from '@mui/material';
 import { PictureAsPdf as PdfIcon } from '@mui/icons-material';
-import { Case, CaseReportRecord } from '@types/index';
+import { Case, CaseReportRecord } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
 

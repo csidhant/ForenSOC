@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.config import get_settings
 from app.models.case import Case
+from app.models.alert import Alert
 from app.utils.hash_utils import calculate_sha256
+from sqlalchemy import func
 
 settings = get_settings()
 
@@ -120,8 +122,50 @@ def generate_case_pdf(db: Session, case_id: int, title: str, generated_by: int |
     story.append(t2)
     story.append(Spacer(1, 18))
 
-    story.append(Paragraph("<b>Notes</b>", styles["Heading2"]))
-    for n in (case.notes or [])[:20]:
+    # MITRE ATT&CK Section
+    story.append(Paragraph("<b>MITRE ATT&CK Summary</b>", styles["Heading2"]))
+    mitre_data = [["ID", "Technique", "Tactic", "Count"]]
+    q = (
+        db.query(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic, func.count(Alert.id))
+        .filter(Alert.case_id == case_id, Alert.mitre_id.is_not(None))
+        .group_by(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic)
+        .all()
+    )
+    for m_id, tech, tact, cnt in q:
+        mitre_data.append([
+            _safe_paragraph(m_id, 20),
+            _safe_paragraph(tech, 100),
+            _safe_paragraph(tact, 100),
+            str(cnt)
+        ])
+    
+    if len(mitre_data) == 1:
+        mitre_data.append(["—", "—", "No MITRE mappings", "—"])
+    
+    t3 = Table(mitre_data, repeatRows=1)
+    t3.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+    ]))
+    story.append(t3)
+    story.append(Spacer(1, 18))
+
+    story.append(Paragraph("<b>Recommendations</b>", styles["Heading2"]))
+    recs = [n for n in (case.notes or []) if n.note_type == "recommendation"]
+    if not recs:
+        story.append(Paragraph("No recommendations recorded for this case.", styles["Italic"]))
+    for r in recs[:10]:
+        story.append(Paragraph(f"• {_safe_paragraph(r.note_text, 1500)}", styles["BodyText"]))
+        story.append(Spacer(1, 4))
+    story.append(Spacer(1, 18))
+
+    story.append(Paragraph("<b>Investigation Notes</b>", styles["Heading2"]))
+    invest_notes = [n for n in (case.notes or []) if n.note_type != "recommendation"]
+    if not invest_notes:
+        story.append(Paragraph("No investigation notes recorded.", styles["Italic"]))
+    for n in invest_notes[:20]:
         story.append(Paragraph(_safe_paragraph(n.note_text, 1500), styles["BodyText"]))
         story.append(Spacer(1, 6))
 

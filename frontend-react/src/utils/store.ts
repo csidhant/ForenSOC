@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { User, Case, Alert } from '@types/index';
+import { User } from '../types';
+import { Case, Alert } from '../types';
 
 interface AuthStore {
   user: User | null;

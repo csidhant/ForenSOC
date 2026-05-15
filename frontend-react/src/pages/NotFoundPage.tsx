@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { Home as HomeIcon } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 
@@ -20,7 +20,7 @@ const NotFoundPage: React.FC = () => {
       </Typography>
       <Typography variant="h4">Page Not Found</Typography>
       <Typography color="textSecondary" sx={{ mb: 2 }}>
-        The page you're looking for doesn't exist.
+        The page you&apos;re looking for doesn&apos;t exist.
       </Typography>
       <Button
         variant="contained"

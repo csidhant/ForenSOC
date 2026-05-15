@@ -66,3 +66,28 @@ async def mitre_sync_case(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
     n = mitre_sync.sync_mitre_from_case_alerts(db, case_id)
     return {"case_id": case_id, "mappings_created": n}
+
+
+@router.get("/global-heatmap", response_model=List[MitreTechniqueCount])
+async def mitre_global_heatmap(
+    current_user: User = Depends(get_current_analyst_user),
+    db: Session = Depends(get_db),
+):
+    """Get cross-case MITRE technique counts for a global heatmap."""
+    q = (
+        db.query(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic, func.count(Alert.id))
+        .filter(Alert.mitre_id.is_not(None))
+        .group_by(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic)
+        .all()
+    )
+    techniques: List[MitreTechniqueCount] = []
+    for mitre_id, technique, tactic, cnt in q:
+        techniques.append(
+            MitreTechniqueCount(
+                technique_id=mitre_id,
+                technique=technique or mitre_id,
+                tactic=tactic,
+                count=int(cnt),
+            )
+        )
+    return sorted(techniques, key=lambda x: -x.count)
