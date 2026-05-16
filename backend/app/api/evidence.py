@@ -52,7 +52,11 @@ def _evidence_sort_key(ev) -> float:
     return 0.0
 
 
-@router.post("/upload", response_model=EvidenceUploadResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/upload",
+    response_model=EvidenceUploadResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def upload_evidence(
     case_id: int = Form(...),
     evidence_type: str = Form(...),
@@ -130,7 +134,9 @@ async def upload_evidence(
             is_sensitive=is_sensitive,
             collected_by=collected_by,
         )
-        db_evidence = evidence_crud.create_evidence(db, payload, uploaded_by=current_user.id)
+        db_evidence = evidence_crud.create_evidence(
+            db, payload, uploaded_by=current_user.id
+        )
     except ValueError as exc:
         if dest_path.exists():
             try:
@@ -166,7 +172,9 @@ async def list_evidence(
     rows: list = []
     if current_user.role.name.lower() != "admin" and case_id is None:
         created = CaseCRUD.get_cases_by_creator(db, current_user.id, skip=0, limit=500)
-        assigned = CaseCRUD.get_cases_assigned_to(db, current_user.id, skip=0, limit=500)
+        assigned = CaseCRUD.get_cases_assigned_to(
+            db, current_user.id, skip=0, limit=500
+        )
         case_ids = {c.id for c in list(created) + list(assigned)}
         if not case_ids:
             return []
@@ -212,11 +220,15 @@ async def get_evidence(
 ):
     """Get evidence metadata; logs a chain-of-custody 'viewed' entry."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     ev = evidence_crud.get_evidence(db, evidence_id)
     if not ev:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
 
     evidence_crud.create_chain_of_custody(
         db,
@@ -230,7 +242,9 @@ async def get_evidence(
     return EvidenceSchema.model_validate(ev)
 
 
-@router.get("/{evidence_id}/chain-of-custody", response_model=List[ChainOfCustodySchema])
+@router.get(
+    "/{evidence_id}/chain-of-custody", response_model=List[ChainOfCustodySchema]
+)
 async def get_chain_of_custody(
     evidence_id: int,
     current_user: User = Depends(get_current_analyst_user),
@@ -238,11 +252,15 @@ async def get_chain_of_custody(
 ):
     """List chain-of-custody entries for an evidence item."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     ev = evidence_crud.get_evidence(db, evidence_id)
     if not ev:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
 
     entries = evidence_crud.get_chain_of_custody(db, evidence_id)
     return [ChainOfCustodySchema.model_validate(c) for c in entries]
@@ -257,11 +275,15 @@ async def append_chain_of_custody(
 ):
     """Manually append a chain-of-custody record (e.g. analysis step)."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     ev = evidence_crud.get_evidence(db, evidence_id)
     if not ev:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
 
     coc = evidence_crud.create_chain_of_custody(
         db,
@@ -285,11 +307,17 @@ async def verify_evidence(
 ):
     """Recompute SHA-256 and update integrity status plus chain-of-custody."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
-    updated = evidence_crud.verify_evidence_integrity(db, evidence_id, verified_by=current_user.id)
+    updated = evidence_crud.verify_evidence_integrity(
+        db, evidence_id, verified_by=current_user.id
+    )
     if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
     return EvidenceSchema.model_validate(updated)
 
 
@@ -302,11 +330,15 @@ async def update_evidence(
 ):
     """Update editable metadata fields (not file content or hashes)."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     updated = evidence_crud.update_evidence(db, evidence_id, body)
     if not updated:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
     return EvidenceSchema.model_validate(updated)
 
 
@@ -318,11 +350,15 @@ async def delete_evidence(
 ):
     """Remove evidence record and stored file (admin or case access)."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     ok = evidence_crud.delete_evidence(db, evidence_id)
     if not ok:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
 
 
 @router.get("/{evidence_id}/download")
@@ -333,15 +369,21 @@ async def download_evidence(
 ):
     """Download the stored artifact; logs 'exported' in chain of custody."""
     if not check_evidence_access(current_user, evidence_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied"
+        )
 
     ev = evidence_crud.get_evidence(db, evidence_id)
     if not ev or not ev.stored_path:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Evidence not found"
+        )
 
     path = Path(ev.stored_path)
     if not path.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Stored file missing")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Stored file missing"
+        )
 
     evidence_crud.create_chain_of_custody(
         db,

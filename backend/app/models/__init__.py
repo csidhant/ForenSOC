@@ -10,8 +10,15 @@ from app.models.alert import Alert, AlertNote
 from app.models.evidence import Evidence, ChainOfCustody
 from app.models.timeline import TimelineEvent
 from app.models.mitre import MitreMapping
-from app.models.forensics import YaraResult, VolatilityResult, PCAPAnalysis, BrowserArtifact
+from app.models.forensics import (
+    YaraResult,
+    VolatilityResult,
+    PCAPAnalysis,
+    BrowserArtifact,
+)
 from app.models.report import Report
+from app.models.detection import DetectionRule
+from app.models.audit import AuditLog
 
 __all__ = [
     "Base",
@@ -33,4 +40,6 @@ __all__ = [
     "PCAPAnalysis",
     "BrowserArtifact",
     "Report",
+    "DetectionRule",
+    "AuditLog",
 ]

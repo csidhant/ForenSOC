@@ -24,7 +24,9 @@ async def list_timeline(
     db: Session = Depends(get_db),
 ):
     if not check_case_access(current_user, case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
     rows = timeline_crud.list_timeline_for_case(db, case_id, skip=skip, limit=limit)
     return [TimelineEventRead.model_validate(r) for r in rows]
 
@@ -36,7 +38,9 @@ async def rebuild_timeline(
     db: Session = Depends(get_db),
 ):
     if not check_case_access(current_user, case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
     n = timeline_builder.rebuild_case_timeline(db, case_id)
     return TimelineRebuildResponse(
         case_id=case_id,

@@ -12,7 +12,9 @@ from app.crud.evidence import get_evidence
 from app.models.forensics import PCAPAnalysis
 
 
-def analyze_suricata_eve_file(db: Session, evidence_id: int, eve_file_path: str, analyzed_by: int | None) -> PCAPAnalysis:
+def analyze_suricata_eve_file(
+    db: Session, evidence_id: int, eve_file_path: str, analyzed_by: int | None
+) -> PCAPAnalysis:
     """Read EVE NDJSON from disk path (already uploaded as evidence)."""
     ev = get_evidence(db, evidence_id)
     if not ev:
@@ -60,7 +62,9 @@ def analyze_suricata_eve_file(db: Session, evidence_id: int, eve_file_path: str,
         suricata_dns=json.dumps(dns_rows[:200])[:80000],
         suricata_http=json.dumps(http_rows[:200])[:80000],
         suricata_tls=json.dumps(tls_rows[:200])[:80000],
-        suspicious_dns_detected=len([d for d in dns_rows if len(str(d.get("rrname", ""))) > 80]),
+        suspicious_dns_detected=len(
+            [d for d in dns_rows if len(str(d.get("rrname", ""))) > 80]
+        ),
     )
     db.add(row)
     db.commit()

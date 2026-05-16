@@ -9,6 +9,7 @@ from datetime import datetime
 
 class RawEventCreate(BaseModel):
     """Schema for ingesting a raw log event."""
+
     log_source: str = Field(..., min_length=1)
     raw_data: str = Field(..., min_length=1)
     case_id: Optional[int] = None
@@ -16,6 +17,7 @@ class RawEventCreate(BaseModel):
 
 class RawEventResponse(BaseModel):
     """Schema for raw event output."""
+
     id: int
     log_source: str
     raw_data: str
@@ -30,6 +32,7 @@ class RawEventResponse(BaseModel):
 
 class NormalizedEventResponse(BaseModel):
     """Schema for normalized event output."""
+
     id: int
     event_timestamp: datetime
     log_source: str
@@ -54,9 +57,12 @@ class NormalizedEventResponse(BaseModel):
 
 class LogIngestResponse(BaseModel):
     """Schema for log ingestion response."""
+
     raw_event: RawEventResponse
     normalized_event: Optional[NormalizedEventResponse] = None
-    alerts_generated: int = Field(0, description="Number of alerts generated from this log")
+    alerts_generated: int = Field(
+        0, description="Number of alerts generated from this log"
+    )
 
     class Config:
         from_attributes = True

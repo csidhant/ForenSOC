@@ -29,26 +29,36 @@ async def list_reports(
     db: Session = Depends(get_db),
 ):
     if not check_case_access(current_user, case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
     rows = report_crud.list_reports_for_case(db, case_id, skip=skip, limit=limit)
     return [ReportRead.model_validate(r) for r in rows]
 
 
-@router.post("/generate", response_model=ReportGenerateResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/generate",
+    response_model=ReportGenerateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def generate_report(
     body: ReportGenerateRequest,
     current_user: User = Depends(get_current_analyst_user),
     db: Session = Depends(get_db),
 ):
     if not check_case_access(current_user, body.case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
     title = body.title or f"ForenSOC incident report — case {body.case_id}"
     try:
         path, size, sha, pages = report_generator.generate_case_pdf(
             db, body.case_id, title, current_user.id
         )
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
 
     r = report_crud.create_report(
         db,
@@ -75,12 +85,18 @@ async def download_report(
 ):
     r = report_crud.get_report(db, report_id)
     if not r:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Report not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+        )
     if not check_case_access(current_user, r.case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
     path = Path(r.file_path)
     if not path.is_file():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDF file missing")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="PDF file missing"
+        )
     safe = quote(f"{r.report_number}.pdf")
     return FileResponse(
         path=str(path),

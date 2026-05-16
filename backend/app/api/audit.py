@@ -14,6 +14,7 @@ from datetime import datetime
 
 router = APIRouter(prefix="/api/audit", tags=["audit"])
 
+
 class AuditLogResponse(BaseModel):
     id: int
     timestamp: datetime
@@ -27,6 +28,7 @@ class AuditLogResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
 @router.get("", response_model=List[AuditLogResponse])
 async def list_audit_logs(
     skip: int = Query(0, ge=0),
@@ -34,17 +36,17 @@ async def list_audit_logs(
     action: Optional[str] = None,
     username: Optional[str] = None,
     current_user: User = Depends(get_current_admin_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     List system audit logs (Admin only).
     """
     query = db.query(AuditLog)
-    
+
     if action:
         query = query.filter(AuditLog.action == action)
     if username:
         query = query.filter(AuditLog.username == username)
-        
+
     logs = query.order_by(AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
     return logs

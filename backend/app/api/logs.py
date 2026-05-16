@@ -22,7 +22,9 @@ from app.models.user import User
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
 
-@router.post("/ingest", response_model=LogIngestResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/ingest", response_model=LogIngestResponse, status_code=status.HTTP_201_CREATED
+)
 async def ingest_log(
     raw_event_data: RawEventCreate,
     current_user: User = Depends(get_current_analyst_user),
@@ -59,13 +61,14 @@ async def ingest_log(
 
     # Process event through detection engine
     from app.services.detection_engine import DetectionEngine
+
     detection_engine = DetectionEngine(db)
     alerts = detection_engine.process_event(normalized_event)
 
     return LogIngestResponse(
         raw_event=raw_event,
         normalized_event=normalized_event,
-        alerts_generated=len(alerts)
+        alerts_generated=len(alerts),
     )
 
 
@@ -106,7 +109,9 @@ async def get_raw_event(
     """
     event = EventCRUD.get_raw_event(db, raw_event_id)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Raw event not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Raw event not found"
+        )
     return RawEventResponse.from_orm(event)
 
 
@@ -143,13 +148,13 @@ async def list_normalized_events(
         start_time=start_time,
         end_time=end_time,
     )
-    
+
     return PaginatedResponse(
         items=[NormalizedEventResponse.from_orm(event) for event in items],
         total=total,
         page=(skip // limit) + 1,
         size=limit,
-        pages=(total + limit - 1) // limit
+        pages=(total + limit - 1) // limit,
     )
 
 
@@ -164,5 +169,7 @@ async def get_normalized_event(
     """
     event = EventCRUD.get_normalized_event(db, normalized_event_id)
     if not event:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Normalized event not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Normalized event not found"
+        )
     return NormalizedEventResponse.from_orm(event)

@@ -20,7 +20,11 @@ class LogParserService:
         source_lower = log_source.lower()
         if "auth" in source_lower or "sshd" in text.lower():
             return LogParserService._parse_auth_log(text, log_source)
-        if "apache" in source_lower or "nginx" in source_lower or re.search(r'"\s\d{3}\s\d+', text):
+        if (
+            "apache" in source_lower
+            or "nginx" in source_lower
+            or re.search(r'"\s\d{3}\s\d+', text)
+        ):
             return LogParserService._parse_web_log(text, log_source)
         if "syslog" in source_lower or "syslog" in text.lower():
             return LogParserService._generic_parse(raw_data, log_source)
@@ -37,22 +41,32 @@ class LogParserService:
         source_ip = None
         hostname = None
 
-        if re.search(r'failed password|authentication failure|invalid user', raw_data, re.IGNORECASE):
+        if re.search(
+            r"failed password|authentication failure|invalid user",
+            raw_data,
+            re.IGNORECASE,
+        ):
             event_type = "failed_login"
             severity = "High"
-        elif re.search(r'accepted password|accepted publickey|accepted keyboard-interactive', raw_data, re.IGNORECASE):
+        elif re.search(
+            r"accepted password|accepted publickey|accepted keyboard-interactive",
+            raw_data,
+            re.IGNORECASE,
+        ):
             event_type = "successful_login"
             severity = "Low"
 
-        user_match = re.search(r'for (?P<username>[\w\-_.]+)', raw_data)
+        user_match = re.search(r"for (?P<username>[\w\-_.]+)", raw_data)
         if user_match:
             username = user_match.group("username")
 
-        ip_match = re.search(r'(?:from|rhost=)(?P<ip>\d{1,3}(?:\.\d{1,3}){3})', raw_data)
+        ip_match = re.search(
+            r"(?:from|rhost=)(?P<ip>\d{1,3}(?:\.\d{1,3}){3})", raw_data
+        )
         if ip_match:
             source_ip = ip_match.group("ip")
 
-        host_match = re.search(r'(?P<hostname>[\w\-_.]+)\s*(?:sshd|sudo|su)?', raw_data)
+        host_match = re.search(r"(?P<hostname>[\w\-_.]+)\s*(?:sshd|sudo|su)?", raw_data)
         if host_match:
             hostname = host_match.group("hostname")
 
@@ -90,7 +104,9 @@ class LogParserService:
         )
         if log_match:
             source_ip = log_match.group("remote")
-            username = log_match.group("user") if log_match.group("user") != "-" else None
+            username = (
+                log_match.group("user") if log_match.group("user") != "-" else None
+            )
             description = f"{log_match.group('method')} {log_match.group('path')} -> {log_match.group('status')}"
             status = int(log_match.group("status"))
             if status >= 500:
@@ -99,7 +115,9 @@ class LogParserService:
                 severity = "Medium"
             event_type = "http_request"
             try:
-                timestamp = datetime.strptime(log_match.group("time"), "%d/%b/%Y:%H:%M:%S %z")
+                timestamp = datetime.strptime(
+                    log_match.group("time"), "%d/%b/%Y:%H:%M:%S %z"
+                )
             except ValueError:
                 timestamp = datetime.utcnow()
 

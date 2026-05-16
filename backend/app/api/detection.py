@@ -7,8 +7,12 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
 from app.schemas.detection import (
-    DetectionRuleCreate, DetectionRuleUpdate, DetectionRuleResponse,
-    DetectionAlertResponse, DetectionScanRequest, DetectionScanResponse
+    DetectionRuleCreate,
+    DetectionRuleUpdate,
+    DetectionRuleResponse,
+    DetectionAlertResponse,
+    DetectionScanRequest,
+    DetectionScanResponse,
 )
 from app.services.detection_engine import DetectionEngine, RuleManager
 from app.services.sigma_loader import SigmaLoader
@@ -18,52 +22,58 @@ from app.models.user import User
 router = APIRouter(prefix="/api/detection", tags=["detection"])
 
 
-@router.post("/rules", response_model=DetectionRuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/rules", response_model=DetectionRuleResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_detection_rule(
     rule_data: DetectionRuleCreate,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Create a new detection rule.
     """
     # Check if rule name already exists
     rule_manager = RuleManager(db)
-    existing = db.query(DetectionRule).filter(DetectionRule.name == rule_data.name).first()
+    existing = (
+        db.query(DetectionRule).filter(DetectionRule.name == rule_data.name).first()
+    )
     if existing:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Rule name already exists"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Rule name already exists"
         )
 
     rule = rule_manager.create_rule(rule_data.dict(), current_user.id)
     return DetectionRuleResponse.from_orm(rule)
 
 
-@router.post("/rules/sigma", response_model=DetectionRuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/rules/sigma",
+    response_model=DetectionRuleResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def upload_sigma_rule(
     yaml_content: str,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Import a Sigma rule from YAML content.
     """
     try:
-        rule = SigmaLoader.import_sigma_rule(db, yaml_content, created_by=current_user.id)
+        rule = SigmaLoader.import_sigma_rule(
+            db, yaml_content, created_by=current_user.id
+        )
         return DetectionRuleResponse.from_orm(rule)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/rules", response_model=List[DetectionRuleResponse])
 async def list_detection_rules(
     enabled_only: bool = Query(False, description="Return only enabled rules"),
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     List all detection rules.
@@ -77,7 +87,7 @@ async def list_detection_rules(
 async def get_detection_rule(
     rule_id: int,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get a specific detection rule by ID.
@@ -86,8 +96,7 @@ async def get_detection_rule(
     rule = rule_manager.get_rule(rule_id)
     if not rule:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Detection rule not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Detection rule not found"
         )
 
     return DetectionRuleResponse.from_orm(rule)
@@ -98,7 +107,7 @@ async def update_detection_rule(
     rule_id: int,
     rule_data: DetectionRuleUpdate,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update a detection rule.
@@ -107,8 +116,7 @@ async def update_detection_rule(
     rule = rule_manager.update_rule(rule_id, rule_data.dict(exclude_unset=True))
     if not rule:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Detection rule not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Detection rule not found"
         )
 
     return DetectionRuleResponse.from_orm(rule)
@@ -118,7 +126,7 @@ async def update_detection_rule(
 async def delete_detection_rule(
     rule_id: int,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Delete a detection rule.
@@ -127,8 +135,7 @@ async def delete_detection_rule(
     success = rule_manager.delete_rule(rule_id)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Detection rule not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Detection rule not found"
         )
 
 
@@ -136,7 +143,7 @@ async def delete_detection_rule(
 async def toggle_detection_rule(
     rule_id: int,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Toggle a detection rule's enabled status.
@@ -145,8 +152,7 @@ async def toggle_detection_rule(
     rule = rule_manager.toggle_rule(rule_id)
     if not rule:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Detection rule not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Detection rule not found"
         )
 
     return DetectionRuleResponse.from_orm(rule)
@@ -156,7 +162,7 @@ async def toggle_detection_rule(
 async def scan_events(
     scan_request: DetectionScanRequest,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Manually scan historical events for alerts.
@@ -167,7 +173,7 @@ async def scan_events(
     return DetectionScanResponse(
         alerts_scanned=len(alerts),
         alerts_generated=len(alerts),
-        message=f"Scanned events and generated {len(alerts)} alerts"
+        message=f"Scanned events and generated {len(alerts)} alerts",
     )
 
 
@@ -177,7 +183,7 @@ async def list_detection_alerts(
     limit: int = Query(50, ge=1, le=200),
     rule_id: Optional[int] = None,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     List alerts generated by detection rules.
@@ -199,7 +205,7 @@ async def list_detection_alerts(
 async def get_detection_alert(
     alert_id: int,
     current_user: User = Depends(get_current_analyst_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get a detection-generated alert with rule and event details.
@@ -209,8 +215,7 @@ async def get_detection_alert(
     alert = AlertCRUD.get_alert(db, alert_id)
     if not alert or not alert.detection_rule_id:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Detection alert not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Detection alert not found"
         )
 
     return DetectionAlertResponse.from_orm(alert)

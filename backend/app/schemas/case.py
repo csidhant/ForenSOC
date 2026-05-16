@@ -10,6 +10,7 @@ from datetime import datetime
 # Case schemas
 class CaseBase(BaseModel):
     """Base case schema."""
+
     case_number: str = Field(..., min_length=1)
     title: str = Field(..., min_length=3, max_length=255)
     description: Optional[str] = None
@@ -20,11 +21,13 @@ class CaseBase(BaseModel):
 
 class CaseCreate(CaseBase):
     """Schema for creating a case."""
+
     pass
 
 
 class CaseUpdate(BaseModel):
     """Schema for updating a case."""
+
     title: Optional[str] = None
     description: Optional[str] = None
     severity: Optional[str] = None
@@ -36,6 +39,7 @@ class CaseUpdate(BaseModel):
 
 class CaseResponse(CaseBase):
     """Schema for case response."""
+
     id: int
     status: str
     created_by: int
@@ -46,7 +50,7 @@ class CaseResponse(CaseBase):
     is_confidential: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -54,42 +58,48 @@ class CaseResponse(CaseBase):
 # CaseNote schemas
 class CaseNoteBase(BaseModel):
     """Base case note schema."""
+
     note_text: str = Field(..., min_length=1)
 
 
 class CaseNoteCreate(CaseNoteBase):
     """Schema for creating a case note."""
+
     pass
 
 
 class CaseNoteUpdate(BaseModel):
     """Schema for updating a case note."""
+
     note_text: str = Field(..., min_length=1)
 
 
 class CaseNoteResponse(CaseNoteBase):
     """Schema for case note response."""
+
     id: int
     case_id: int
     analyst_id: Optional[int]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class CaseDetailResponse(CaseResponse):
     """Schema for case detail response with related data."""
+
     notes: List[CaseNoteResponse] = []
     alert_count: int = 0
     evidence_count: int = 0
-    
+
     class Config:
         from_attributes = True
 
 
 class BulkCaseAssign(BaseModel):
     """Schema for bulk case assignment."""
+
     case_ids: List[int]
     assigned_to: int

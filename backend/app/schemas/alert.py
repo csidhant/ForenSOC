@@ -10,6 +10,7 @@ from datetime import datetime
 # Alert schemas
 class AlertBase(BaseModel):
     """Base alert schema."""
+
     alert_number: str = Field(..., min_length=1)
     title: str = Field(..., min_length=3, max_length=255)
     description: Optional[str] = None
@@ -19,6 +20,7 @@ class AlertBase(BaseModel):
 
 class AlertCreate(AlertBase):
     """Schema for creating an alert."""
+
     source_ip: Optional[str] = None
     dest_ip: Optional[str] = None
     source_port: Optional[int] = Field(None, ge=0, le=65535)
@@ -33,6 +35,7 @@ class AlertCreate(AlertBase):
 
 class AlertUpdate(BaseModel):
     """Schema for updating an alert."""
+
     title: Optional[str] = None
     description: Optional[str] = None
     severity: Optional[str] = None
@@ -45,6 +48,7 @@ class AlertUpdate(BaseModel):
 
 class AlertResponse(AlertBase):
     """Schema for alert response."""
+
     id: int
     status: str
     source_ip: Optional[str]
@@ -64,7 +68,7 @@ class AlertResponse(AlertBase):
     assigned_to: Optional[int]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -72,41 +76,47 @@ class AlertResponse(AlertBase):
 # AlertNote schemas
 class AlertNoteBase(BaseModel):
     """Base alert note schema."""
+
     note_text: str = Field(..., min_length=1)
 
 
 class AlertNoteCreate(AlertNoteBase):
     """Schema for creating an alert note."""
+
     pass
 
 
 class AlertNoteUpdate(BaseModel):
     """Schema for updating an alert note."""
+
     note_text: str = Field(..., min_length=1)
 
 
 class AlertNoteResponse(AlertNoteBase):
     """Schema for alert note response."""
+
     id: int
     alert_id: int
     analyst_id: Optional[int]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class AlertDetailResponse(AlertResponse):
     """Schema for alert detail response with related data."""
+
     notes: List[AlertNoteResponse] = []
-    
+
     class Config:
         from_attributes = True
 
 
 class AlertStatisticsResponse(BaseModel):
     """Schema for alert statistics."""
+
     total_alerts: int
     new_alerts: int
     in_progress_alerts: int

@@ -9,10 +9,10 @@ from pathlib import Path
 def calculate_sha256(file_path: str) -> str:
     """
     Calculate SHA256 hash of a file.
-    
+
     Args:
         file_path: Path to the file
-        
+
     Returns:
         SHA256 hash as hex string
     """
@@ -26,10 +26,10 @@ def calculate_sha256(file_path: str) -> str:
 def calculate_md5(file_path: str) -> str:
     """
     Calculate MD5 hash of a file.
-    
+
     Args:
         file_path: Path to the file
-        
+
     Returns:
         MD5 hash as hex string
     """
@@ -43,23 +43,23 @@ def calculate_md5(file_path: str) -> str:
 def verify_hash(file_path: str, sha256_hash: str, md5_hash: str = None) -> dict:
     """
     Verify file hash integrity.
-    
+
     Args:
         file_path: Path to the file
         sha256_hash: Expected SHA256 hash
         md5_hash: Expected MD5 hash (optional)
-        
+
     Returns:
         Dictionary with verification results
     """
     calculated_sha256 = calculate_sha256(file_path)
     sha256_match = calculated_sha256 == sha256_hash
-    
+
     md5_match = True
     if md5_hash:
         calculated_md5 = calculate_md5(file_path)
         md5_match = calculated_md5 == md5_hash
-    
+
     return {
         "integrity_status": "Verified" if (sha256_match and md5_match) else "Tampered",
         "sha256_match": sha256_match,

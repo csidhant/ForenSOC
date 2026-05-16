@@ -45,7 +45,9 @@ def analyze_memory_dump(
                 text=True,
                 timeout=300,
             )
-            out_text = (proc.stdout or "") + ("\n# stderr:\n" + proc.stderr if proc.stderr else "")
+            out_text = (proc.stdout or "") + (
+                "\n# stderr:\n" + proc.stderr if proc.stderr else ""
+            )
             if proc.returncode != 0 and not out_text.strip():
                 out_text = f"# Plugin {plugin} exit {proc.returncode}"
         except FileNotFoundError:
@@ -55,9 +57,13 @@ def analyze_memory_dump(
 
         # Basic suspicious indicator detection
         indicators = []
-        if "powershell" in out_text.lower() and ("-enc" in out_text.lower() or "hidden" in out_text.lower()):
+        if "powershell" in out_text.lower() and (
+            "-enc" in out_text.lower() or "hidden" in out_text.lower()
+        ):
             indicators.append("Encoded or hidden PowerShell process detected")
-        if "cmd.exe" in out_text.lower() and ("winword.exe" in out_text.lower() or "excel.exe" in out_text.lower()):
+        if "cmd.exe" in out_text.lower() and (
+            "winword.exe" in out_text.lower() or "excel.exe" in out_text.lower()
+        ):
             indicators.append("Office application spawning cmd.exe detected")
         if "lsass.exe" in out_text.lower() and plugin == "windows.netstat":
             indicators.append("LSASS process making network connections (suspicious)")

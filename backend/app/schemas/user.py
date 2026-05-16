@@ -10,20 +10,23 @@ from datetime import datetime
 # Role schemas
 class RoleBase(BaseModel):
     """Base role schema."""
+
     name: str
     description: Optional[str] = None
 
 
 class RoleCreate(RoleBase):
     """Schema for creating a role."""
+
     pass
 
 
 class RoleResponse(RoleBase):
     """Schema for role response."""
+
     id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -31,6 +34,7 @@ class RoleResponse(RoleBase):
 # User schemas
 class UserBase(BaseModel):
     """Base user schema."""
+
     username: str = Field(..., min_length=3, max_length=255)
     email: EmailStr
     role_id: int
@@ -38,11 +42,13 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     """Schema for creating a user."""
+
     password: str = Field(..., min_length=8)
 
 
 class UserRegister(BaseModel):
     """Schema for registering a new user."""
+
     username: str = Field(..., min_length=3, max_length=255)
     email: EmailStr
     password: str = Field(..., min_length=8)
@@ -50,32 +56,54 @@ class UserRegister(BaseModel):
 
 class UserUpdate(BaseModel):
     """Schema for updating a user."""
+
     email: Optional[EmailStr] = None
     role_id: Optional[int] = None
 
 
 class UserLogin(BaseModel):
     """Schema for user login."""
+
     username: str
     password: str
 
 
 class UserResponse(UserBase):
     """Schema for user response."""
+
     id: int
     is_active: bool
     last_login: Optional[datetime]
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class UserWithRole(UserResponse):
     """Schema for user response with role details."""
+
     role: RoleResponse
-    
+
+    class Config:
+        from_attributes = True
+
+
+class UserPreferencesBase(BaseModel):
+    theme: Optional[str] = "dark"
+    report_templates: Optional[str] = None
+    filter_presets: Optional[str] = None
+
+
+class UserPreferencesUpdate(UserPreferencesBase):
+    pass
+
+
+class UserPreferencesResponse(UserPreferencesBase):
+    id: int
+    user_id: int
+
     class Config:
         from_attributes = True
 
@@ -83,6 +111,7 @@ class UserWithRole(UserResponse):
 # Token schemas
 class Token(BaseModel):
     """JWT token response schema."""
+
     access_token: str
     token_type: str = "bearer"
     user: UserWithRole
@@ -90,6 +119,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     """Decoded JWT token data."""
+
     user_id: Optional[int] = None
     username: Optional[str] = None
     role: Optional[str] = None

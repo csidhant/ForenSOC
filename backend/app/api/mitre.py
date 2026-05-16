@@ -24,10 +24,17 @@ async def mitre_case_summary(
     db: Session = Depends(get_db),
 ):
     if not check_case_access(current_user, case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
 
     q = (
-        db.query(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic, func.count(Alert.id))
+        db.query(
+            Alert.mitre_id,
+            Alert.mitre_technique,
+            Alert.mitre_tactic,
+            func.count(Alert.id),
+        )
         .filter(Alert.case_id == case_id, Alert.mitre_id.is_not(None))
         .group_by(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic)
         .all()
@@ -45,7 +52,9 @@ async def mitre_case_summary(
 
     map_count = db.query(MitreMapping).filter(MitreMapping.case_id == case_id).count()
     alert_mitre = (
-        db.query(Alert).filter(Alert.case_id == case_id, Alert.mitre_id.is_not(None)).count()
+        db.query(Alert)
+        .filter(Alert.case_id == case_id, Alert.mitre_id.is_not(None))
+        .count()
     )
 
     return MitreCaseSummary(
@@ -63,7 +72,9 @@ async def mitre_sync_case(
     db: Session = Depends(get_db),
 ):
     if not check_case_access(current_user, case_id, db):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No access to case")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="No access to case"
+        )
     n = mitre_sync.sync_mitre_from_case_alerts(db, case_id)
     return {"case_id": case_id, "mappings_created": n}
 
@@ -75,7 +86,12 @@ async def mitre_global_heatmap(
 ):
     """Get cross-case MITRE technique counts for a global heatmap."""
     q = (
-        db.query(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic, func.count(Alert.id))
+        db.query(
+            Alert.mitre_id,
+            Alert.mitre_technique,
+            Alert.mitre_tactic,
+            func.count(Alert.id),
+        )
         .filter(Alert.mitre_id.is_not(None))
         .group_by(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic)
         .all()

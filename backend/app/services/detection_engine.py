@@ -41,7 +41,7 @@ class DetectionEngine:
             query = query.filter(
                 and_(
                     DetectionRule.event_type.is_(None),
-                    DetectionRule.event_type == event.event_type
+                    DetectionRule.event_type == event.event_type,
                 )
             )
 
@@ -53,9 +53,13 @@ class DetectionEngine:
                     alert = self._generate_alert(event, rule)
                     if alert:
                         alerts_generated.append(alert)
-                        logger.info(f"Generated alert {alert.alert_number} from rule {rule.name}")
+                        logger.info(
+                            f"Generated alert {alert.alert_number} from rule {rule.name}"
+                        )
             except Exception as e:
-                logger.error(f"Error processing rule {rule.name} against event {event.id}: {e}")
+                logger.error(
+                    f"Error processing rule {rule.name} against event {event.id}: {e}"
+                )
 
         return alerts_generated
 
@@ -83,13 +87,15 @@ class DetectionEngine:
             return False
 
         # Check threshold-based rules (e.g., multiple failed logins)
-        if 'threshold' in pattern and rule.threshold > 1:
+        if "threshold" in pattern and rule.threshold > 1:
             return self._check_threshold_rule(event, rule)
 
         # Check pattern-based rules
         return self._check_pattern_rule(event, pattern)
 
-    def _check_threshold_rule(self, event: NormalizedEvent, rule: DetectionRule) -> bool:
+    def _check_threshold_rule(
+        self, event: NormalizedEvent, rule: DetectionRule
+    ) -> bool:
         """
         Check threshold-based rules (e.g., brute force detection).
         """
@@ -100,29 +106,31 @@ class DetectionEngine:
         query = self.db.query(func.count(NormalizedEvent.id)).filter(
             NormalizedEvent.event_type == event.event_type,
             NormalizedEvent.created_at >= event.created_at - time_window,
-            NormalizedEvent.created_at <= event.created_at
+            NormalizedEvent.created_at <= event.created_at,
         )
 
         # Add pattern-specific filters
-        if 'source_ip' in pattern and pattern['source_ip'] == event.source_ip:
+        if "source_ip" in pattern and pattern["source_ip"] == event.source_ip:
             query = query.filter(NormalizedEvent.source_ip == event.source_ip)
 
-        if 'username' in pattern and pattern['username'] == event.username:
+        if "username" in pattern and pattern["username"] == event.username:
             query = query.filter(NormalizedEvent.username == event.username)
 
-        if 'hostname' in pattern and pattern['hostname'] == event.hostname:
+        if "hostname" in pattern and pattern["hostname"] == event.hostname:
             query = query.filter(NormalizedEvent.hostname == event.hostname)
 
         count = query.scalar()
 
         return count >= rule.threshold
 
-    def _check_pattern_rule(self, event: NormalizedEvent, pattern: Dict[str, Any]) -> bool:
+    def _check_pattern_rule(
+        self, event: NormalizedEvent, pattern: Dict[str, Any]
+    ) -> bool:
         """
         Check pattern-based rules (simple field matching).
         """
         for field, expected_value in pattern.items():
-            if field == 'threshold' or field == 'time_window':
+            if field == "threshold" or field == "time_window":
                 continue
 
             actual_value = getattr(event, field, None)
@@ -131,7 +139,9 @@ class DetectionEngine:
 
         return True
 
-    def _generate_alert(self, event: NormalizedEvent, rule: DetectionRule) -> Optional[Alert]:
+    def _generate_alert(
+        self, event: NormalizedEvent, rule: DetectionRule
+    ) -> Optional[Alert]:
         """
         Generate an alert from a matching event and rule.
         """
@@ -159,14 +169,11 @@ class DetectionEngine:
             "mitre_id": rule.mitre_id,
             "raw_event_id": event.raw_event_id,
             "detection_rule_id": rule.id,
-            "created_by": None  # System-generated
+            "created_by": None,  # System-generated
         }
 
         try:
-            alert = AlertCRUD.create_alert(
-                db=self.db,
-                **alert_data
-            )
+            alert = AlertCRUD.create_alert(db=self.db, **alert_data)
             return alert
         except Exception as e:
             logger.error(f"Failed to create alert for rule {rule.name}: {e}")
@@ -179,11 +186,15 @@ class DetectionEngine:
         """
         cutoff_time = datetime.now() - timedelta(hours=hours_back)
 
-        events = self.db.query(NormalizedEvent).filter(
-            NormalizedEvent.created_at >= cutoff_time
-        ).all()
+        events = (
+            self.db.query(NormalizedEvent)
+            .filter(NormalizedEvent.created_at >= cutoff_time)
+            .all()
+        )
 
-        logger.info(f"Scanning {len(events)} historical events from last {hours_back} hours")
+        logger.info(
+            f"Scanning {len(events)} historical events from last {hours_back} hours"
+        )
 
         return self.process_events_batch(events)
 
@@ -194,22 +205,24 @@ class RuleManager:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_rule(self, rule_data: Dict[str, Any], created_by: Optional[int] = None) -> DetectionRule:
+    def create_rule(
+        self, rule_data: Dict[str, Any], created_by: Optional[int] = None
+    ) -> DetectionRule:
         """Create a new detection rule."""
         rule = DetectionRule(
-            name=rule_data['name'],
-            description=rule_data.get('description'),
-            enabled=rule_data.get('enabled', True),
-            severity=rule_data['severity'],
-            rule_type=rule_data['rule_type'],
-            pattern=rule_data['pattern'],
-            event_type=rule_data.get('event_type'),
-            threshold=rule_data.get('threshold', 1),
-            time_window_seconds=rule_data.get('time_window_seconds', 300),
-            mitre_tactic=rule_data.get('mitre_tactic'),
-            mitre_technique=rule_data.get('mitre_technique'),
-            mitre_id=rule_data.get('mitre_id'),
-            created_by=created_by
+            name=rule_data["name"],
+            description=rule_data.get("description"),
+            enabled=rule_data.get("enabled", True),
+            severity=rule_data["severity"],
+            rule_type=rule_data["rule_type"],
+            pattern=rule_data["pattern"],
+            event_type=rule_data.get("event_type"),
+            threshold=rule_data.get("threshold", 1),
+            time_window_seconds=rule_data.get("time_window_seconds", 300),
+            mitre_tactic=rule_data.get("mitre_tactic"),
+            mitre_technique=rule_data.get("mitre_technique"),
+            mitre_id=rule_data.get("mitre_id"),
+            created_by=created_by,
         )
 
         self.db.add(rule)
@@ -229,7 +242,9 @@ class RuleManager:
         """Get a specific rule by ID."""
         return self.db.query(DetectionRule).filter(DetectionRule.id == rule_id).first()
 
-    def update_rule(self, rule_id: int, updates: Dict[str, Any]) -> Optional[DetectionRule]:
+    def update_rule(
+        self, rule_id: int, updates: Dict[str, Any]
+    ) -> Optional[DetectionRule]:
         """Update a detection rule."""
         rule = self.get_rule(rule_id)
         if not rule:

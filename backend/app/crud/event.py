@@ -54,7 +54,9 @@ class EventCRUD:
         if end_time is not None:
             query = query.filter(RawEvent.ingested_at <= end_time)
 
-        return query.order_by(RawEvent.ingested_at.desc()).offset(skip).limit(limit).all()
+        return (
+            query.order_by(RawEvent.ingested_at.desc()).offset(skip).limit(limit).all()
+        )
 
     @staticmethod
     def create_normalized_event(
@@ -96,8 +98,14 @@ class EventCRUD:
         return normalized_event
 
     @staticmethod
-    def get_normalized_event(db: Session, normalized_event_id: int) -> Optional[NormalizedEvent]:
-        return db.query(NormalizedEvent).filter(NormalizedEvent.id == normalized_event_id).first()
+    def get_normalized_event(
+        db: Session, normalized_event_id: int
+    ) -> Optional[NormalizedEvent]:
+        return (
+            db.query(NormalizedEvent)
+            .filter(NormalizedEvent.id == normalized_event_id)
+            .first()
+        )
 
     @staticmethod
     def get_normalized_events(
@@ -135,19 +143,21 @@ class EventCRUD:
         if end_time is not None:
             query = query.filter(NormalizedEvent.event_timestamp <= end_time)
 
-        return query.order_by(NormalizedEvent.event_timestamp.desc()).offset(skip).limit(limit).all()
+        return (
+            query.order_by(NormalizedEvent.event_timestamp.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     @staticmethod
     def get_normalized_events_paginated(
-        db: Session,
-        skip: int = 0,
-        limit: int = 50,
-        **filters
+        db: Session, skip: int = 0, limit: int = 50, **filters
     ) -> Tuple[List[NormalizedEvent], int]:
         """Get events and total count."""
         query = db.query(NormalizedEvent)
-        
+
         # Apply filters (simplified for bulk)
         for key, value in filters.items():
             if value is not None:
@@ -157,7 +167,12 @@ class EventCRUD:
                     query = query.filter(NormalizedEvent.event_timestamp <= value)
                 else:
                     query = query.filter(getattr(NormalizedEvent, key) == value)
-        
+
         total = query.count()
-        items = query.order_by(NormalizedEvent.event_timestamp.desc()).offset(skip).limit(limit).all()
+        items = (
+            query.order_by(NormalizedEvent.event_timestamp.desc())
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
         return items, total

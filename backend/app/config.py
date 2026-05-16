@@ -10,39 +10,44 @@ import os
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
-    
+
     # Application
     APP_NAME: str = "ForenSOC"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     API_V1_STR: str = "/api"
-    
+
     # Database
     DATABASE_URL: str = "sqlite:///./forensoc.db"  # Default SQLite for MVP
     DATABASE_ECHO: bool = False
-    
+
     # Security
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
-    
+
     # CORS
     ALLOWED_ORIGINS: list = [
         "http://localhost",
         "http://localhost:8000",
-        "http://localhost:8501",  # Streamlit
-        "http://localhost:3000",  # React frontend
+        "http://localhost:8501",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
     ]
-    
+
     # File uploads
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE: int = 5 * 1024 * 1024 * 1024  # 5GB
-    
+
     # Forensics tools paths
     VOLATILITY_PATH: str = "vol"  # Assumes vol in PATH
     ZEEK_PATH: str = "zeek"
     YARA_PATH: str = "yara"
-    
+
     # Detection
     SSH_BRUTE_FORCE_THRESHOLD: int = 5
     SSH_BRUTE_FORCE_TIMEFRAME: int = 120  # seconds
@@ -54,15 +59,16 @@ class Settings(BaseSettings):
 
     # Initial admin credentials for development
     ADMIN_USERNAME: str = "admin"
-    ADMIN_EMAIL: str = "admin@forensoc.local"
+    ADMIN_EMAIL: str = "admin@forensoc.com"
     ADMIN_PASSWORD: str = "admin"
     DEFAULT_USER_ROLE: str = "viewer"
 
     # Celery / Redis (async forensics)
     REDIS_URL: str = "redis://127.0.0.1:6379/0"
-    
+
     class Config:
         """Configuration settings."""
+
         env_file = ".env"
         case_sensitive = False
 

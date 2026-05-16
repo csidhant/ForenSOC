@@ -8,6 +8,7 @@ from app.models.user import User
 from typing import Any, Optional, Dict
 import json
 
+
 class AuditLogger:
     """Helper to record audit events."""
 
@@ -20,7 +21,7 @@ class AuditLogger:
         resource_id: Optional[str] = None,
         details: Optional[str] = None,
         meta_data: Optional[Dict[str, Any]] = None,
-        ip_address: Optional[str] = None
+        ip_address: Optional[str] = None,
     ) -> AuditLog:
         """Create an audit log entry."""
         log_entry = AuditLog(
@@ -31,7 +32,7 @@ class AuditLogger:
             resource_type=resource_type,
             resource_id=resource_id,
             details=details,
-            meta_data=meta_data
+            meta_data=meta_data,
         )
         db.add(log_entry)
         db.commit()

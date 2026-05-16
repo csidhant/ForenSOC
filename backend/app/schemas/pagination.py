@@ -3,6 +3,7 @@ from typing import List, Generic, TypeVar, Optional
 
 T = TypeVar("T")
 
+
 class PaginatedResponse(BaseModel, Generic[T]):
     items: List[T]
     total: int

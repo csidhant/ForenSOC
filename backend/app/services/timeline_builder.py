@@ -146,7 +146,10 @@ def rebuild_case_timeline(db: Session, case_id: int) -> int:
                 event_type="memory_analysis",
                 severity="Medium" if v.suspicious_indicators else "Info",
                 description=f"Memory Analysis: {v.plugin_name} on {v.evidence_id}",
-                details={"plugin": v.plugin_name, "indicators": v.suspicious_indicators},
+                details={
+                    "plugin": v.plugin_name,
+                    "indicators": v.suspicious_indicators,
+                },
                 related_evidence_id=v.evidence_id,
             )
         )

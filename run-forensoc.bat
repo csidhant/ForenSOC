@@ -73,19 +73,24 @@ if not exist "frontend-react\.env" if exist "frontend-react\.env.example" (
   copy /Y "frontend-react\.env.example" "frontend-react\.env" >nul
 )
 
-echo.
 echo [INFO] Starting API in a new window: http://127.0.0.1:8000/api/docs
 start "ForenSOC API" cmd /k "cd /d "%~dp0backend" && call venv\Scripts\activate.bat && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
 
 timeout /t 2 /nobreak >nul
 
+echo [INFO] Starting Auto-Ingest Watcher (Automatic Folder Monitoring)...
+start "ForenSOC Automation" cmd /k "cd /d "%~dp0backend" && call venv\Scripts\activate.bat && python automation_service.py"
+
+timeout /t 1 /nobreak >nul
+
 echo [INFO] Starting React app in a new window: http://localhost:3000
 start "ForenSOC UI" cmd /k "cd /d "%~dp0frontend-react" && npm run dev"
 
 echo.
-echo Done. Two console windows should have opened.
-echo   UI:    http://localhost:3000
-echo   API:   http://127.0.0.1:8000/api/docs
+echo Done. Three console windows should have opened.
+echo   UI:         http://localhost:3000
+echo   API:        http://127.0.0.1:8000/api/docs
+echo   Automation: Monitoring backend\ingest_drop\
 echo.
-echo Default dev admin is in backend\.env ^(change for production^).
+echo Default dev admin is in backend\.env (change for production).
 pause

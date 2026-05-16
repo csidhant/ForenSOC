@@ -10,7 +10,9 @@ from app.models.mitre import MitreMapping
 
 def sync_mitre_from_case_alerts(db: Session, case_id: int) -> int:
     """Replace mappings for this case derived from alert MITRE fields."""
-    db.query(MitreMapping).filter(MitreMapping.case_id == case_id).delete(synchronize_session=False)
+    db.query(MitreMapping).filter(MitreMapping.case_id == case_id).delete(
+        synchronize_session=False
+    )
 
     alerts = db.query(Alert).filter(Alert.case_id == case_id).all()
     created = 0

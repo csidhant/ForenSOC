@@ -25,7 +25,9 @@ def _safe_paragraph(text: str, max_len: int = 4000) -> str:
     return html.escape(text.replace("\x00", "")[:max_len])
 
 
-def generate_case_pdf(db: Session, case_id: int, title: str, generated_by: int | None) -> tuple[str, int, str, int]:
+def generate_case_pdf(
+    db: Session, case_id: int, title: str, generated_by: int | None
+) -> tuple[str, int, str, int]:
     """
     Build PDF under UPLOAD_DIR/reports/{case_id}/.
 
@@ -33,7 +35,13 @@ def generate_case_pdf(db: Session, case_id: int, title: str, generated_by: int |
     """
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
     from reportlab.lib import colors
 
     case = (
@@ -126,38 +134,53 @@ def generate_case_pdf(db: Session, case_id: int, title: str, generated_by: int |
     story.append(Paragraph("<b>MITRE ATT&CK Summary</b>", styles["Heading2"]))
     mitre_data = [["ID", "Technique", "Tactic", "Count"]]
     q = (
-        db.query(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic, func.count(Alert.id))
+        db.query(
+            Alert.mitre_id,
+            Alert.mitre_technique,
+            Alert.mitre_tactic,
+            func.count(Alert.id),
+        )
         .filter(Alert.case_id == case_id, Alert.mitre_id.is_not(None))
         .group_by(Alert.mitre_id, Alert.mitre_technique, Alert.mitre_tactic)
         .all()
     )
     for m_id, tech, tact, cnt in q:
-        mitre_data.append([
-            _safe_paragraph(m_id, 20),
-            _safe_paragraph(tech, 100),
-            _safe_paragraph(tact, 100),
-            str(cnt)
-        ])
-    
+        mitre_data.append(
+            [
+                _safe_paragraph(m_id, 20),
+                _safe_paragraph(tech, 100),
+                _safe_paragraph(tact, 100),
+                str(cnt),
+            ]
+        )
+
     if len(mitre_data) == 1:
         mitre_data.append(["—", "—", "No MITRE mappings", "—"])
-    
+
     t3 = Table(mitre_data, repeatRows=1)
-    t3.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-    ]))
+    t3.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.darkblue),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ]
+        )
+    )
     story.append(t3)
     story.append(Spacer(1, 18))
 
     story.append(Paragraph("<b>Recommendations</b>", styles["Heading2"]))
     recs = [n for n in (case.notes or []) if n.note_type == "recommendation"]
     if not recs:
-        story.append(Paragraph("No recommendations recorded for this case.", styles["Italic"]))
+        story.append(
+            Paragraph("No recommendations recorded for this case.", styles["Italic"])
+        )
     for r in recs[:10]:
-        story.append(Paragraph(f"• {_safe_paragraph(r.note_text, 1500)}", styles["BodyText"]))
+        story.append(
+            Paragraph(f"• {_safe_paragraph(r.note_text, 1500)}", styles["BodyText"])
+        )
         story.append(Spacer(1, 4))
     story.append(Spacer(1, 18))
 

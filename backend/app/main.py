@@ -5,6 +5,10 @@ Main FastAPI application for ForenSOC.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from app.config import get_settings
 from app.database import engine, SessionLocal
 from app.models.base import Base
@@ -15,6 +19,9 @@ Base.metadata.create_all(bind=engine)
 
 settings = get_settings()
 
+# Initialize Rate Limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
+
 # Initialize FastAPI app
 app = FastAPI(
     title=settings.APP_NAME,
@@ -24,6 +31,11 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
+
+# Set up Rate Limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Add CORS middleware
 app.add_middleware(
@@ -120,10 +132,7 @@ def init_default_detection_rules(db):
             "description": "Detects multiple failed SSH login attempts from the same IP",
             "severity": "High",
             "rule_type": "ssh_brute_force",
-            "pattern": {
-                "event_type": "failed_login",
-                "threshold": 5
-            },
+            "pattern": {"event_type": "failed_login", "threshold": 5},
             "event_type": "failed_login",
             "threshold": 5,
             "time_window_seconds": 300,
@@ -138,7 +147,7 @@ def init_default_detection_rules(db):
             "rule_type": "suspicious_web",
             "pattern": {
                 "event_type": "http_request",
-                "path_contains": ["/admin", "/wp-admin", "/phpmyadmin"]
+                "path_contains": ["/admin", "/wp-admin", "/phpmyadmin"],
             },
             "event_type": "http_request",
             "threshold": 1,
@@ -152,10 +161,7 @@ def init_default_detection_rules(db):
             "description": "Detects multiple authentication failures",
             "severity": "Medium",
             "rule_type": "multiple_failed_logins",
-            "pattern": {
-                "event_type": "failed_login",
-                "threshold": 3
-            },
+            "pattern": {"event_type": "failed_login", "threshold": 3},
             "event_type": "failed_login",
             "threshold": 3,
             "time_window_seconds": 600,
@@ -167,7 +173,11 @@ def init_default_detection_rules(db):
 
     for rule_data in default_rules:
         # Check if rule already exists
-        existing = db.query(DetectionRule).filter(DetectionRule.name == rule_data["name"]).first()
+        existing = (
+            db.query(DetectionRule)
+            .filter(DetectionRule.name == rule_data["name"])
+            .first()
+        )
         if not existing:
             try:
                 rule_manager.create_rule(rule_data)
@@ -194,6 +204,8 @@ from app.api.reports import router as reports_router
 from app.api.forensics import router as forensics_router
 from app.api.mitre import router as mitre_router
 from app.api.audit import router as audit_router
+from app.api.search import router as search_router
+from app.api.threat_intel import router as threat_intel_router
 
 # Register routers
 app.include_router(auth_router)
@@ -208,9 +220,12 @@ app.include_router(reports_router)
 app.include_router(forensics_router)
 app.include_router(mitre_router)
 app.include_router(audit_router)
+app.include_router(search_router)
+app.include_router(threat_intel_router)
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

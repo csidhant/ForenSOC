@@ -24,9 +24,17 @@ def get_evidence_by_evidence_id(db: Session, evidence_id: str) -> Optional[Evide
     return db.query(Evidence).filter(Evidence.evidence_id == evidence_id).first()
 
 
-def get_evidence_by_case(db: Session, case_id: int, skip: int = 0, limit: int = 100) -> List[Evidence]:
+def get_evidence_by_case(
+    db: Session, case_id: int, skip: int = 0, limit: int = 100
+) -> List[Evidence]:
     """Get all evidence for a case."""
-    return db.query(Evidence).filter(Evidence.case_id == case_id).offset(skip).limit(limit).all()
+    return (
+        db.query(Evidence)
+        .filter(Evidence.case_id == case_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_evidence_by_hash(db: Session, hash_value: str) -> List[Evidence]:
@@ -41,7 +49,7 @@ def search_evidence(
     filename: Optional[str] = None,
     hash_value: Optional[str] = None,
     skip: int = 0,
-    limit: int = 100
+    limit: int = 100,
 ) -> List[Evidence]:
     """Search evidence with filters."""
     query = db.query(Evidence)
@@ -60,13 +68,19 @@ def search_evidence(
     return query.offset(skip).limit(limit).all()
 
 
-def create_evidence(db: Session, evidence: EvidenceCreate, uploaded_by: int) -> Evidence:
+def create_evidence(
+    db: Session, evidence: EvidenceCreate, uploaded_by: int
+) -> Evidence:
     """Create new evidence record."""
     if not evidence.stored_path or not os.path.exists(evidence.stored_path):
-        raise ValueError("Evidence file must exist at stored_path before persisting metadata")
+        raise ValueError(
+            "Evidence file must exist at stored_path before persisting metadata"
+        )
 
     # Generate evidence ID
-    existing_count = db.query(Evidence).filter(Evidence.case_id == evidence.case_id).count()
+    existing_count = (
+        db.query(Evidence).filter(Evidence.case_id == evidence.case_id).count()
+    )
     evidence_id = f"EV-{evidence.case_id:03d}-{existing_count + 1:03d}"
 
     sha256_hash = calculate_file_hash(evidence.stored_path, "sha256")
@@ -105,13 +119,15 @@ def create_evidence(db: Session, evidence: EvidenceCreate, uploaded_by: int) -> 
             action="uploaded",
             actor_id=uploaded_by,
             details=f"Evidence uploaded: {evidence.filename}",
-        )
+        ),
     )
 
     return db_evidence
 
 
-def update_evidence(db: Session, evidence_id: int, evidence_update: EvidenceUpdate) -> Optional[Evidence]:
+def update_evidence(
+    db: Session, evidence_id: int, evidence_update: EvidenceUpdate
+) -> Optional[Evidence]:
     """Update evidence record."""
     db_evidence = get_evidence(db, evidence_id)
     if not db_evidence:
@@ -144,7 +160,9 @@ def delete_evidence(db: Session, evidence_id: int) -> bool:
     return True
 
 
-def verify_evidence_integrity(db: Session, evidence_id: int, verified_by: int) -> Optional[Evidence]:
+def verify_evidence_integrity(
+    db: Session, evidence_id: int, verified_by: int
+) -> Optional[Evidence]:
     """Verify evidence file integrity by recalculating hash."""
     db_evidence = get_evidence(db, evidence_id)
     if not db_evidence or not db_evidence.stored_path:
@@ -177,7 +195,7 @@ def verify_evidence_integrity(db: Session, evidence_id: int, verified_by: int) -
             action="hash_verified",
             actor_id=verified_by,
             details=f"Integrity check: {db_evidence.integrity_status}",
-        )
+        ),
     )
 
     return db_evidence
@@ -185,14 +203,20 @@ def verify_evidence_integrity(db: Session, evidence_id: int, verified_by: int) -
 
 # Chain of Custody operations
 
+
 def get_chain_of_custody(db: Session, evidence_id: int) -> List[ChainOfCustody]:
     """Get chain of custody for evidence."""
-    return db.query(ChainOfCustody).filter(
-        ChainOfCustody.evidence_id == evidence_id
-    ).order_by(ChainOfCustody.action_time).all()
+    return (
+        db.query(ChainOfCustody)
+        .filter(ChainOfCustody.evidence_id == evidence_id)
+        .order_by(ChainOfCustody.action_time)
+        .all()
+    )
 
 
-def create_chain_of_custody(db: Session, chain_of_custody: ChainOfCustodyCreate) -> ChainOfCustody:
+def create_chain_of_custody(
+    db: Session, chain_of_custody: ChainOfCustodyCreate
+) -> ChainOfCustody:
     """Create chain of custody entry."""
     db_coc = ChainOfCustody(
         evidence_id=chain_of_custody.evidence_id,

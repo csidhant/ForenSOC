@@ -44,7 +44,9 @@ def create_report(
     return r
 
 
-def list_reports_for_case(db: Session, case_id: int, skip: int = 0, limit: int = 50) -> List[Report]:
+def list_reports_for_case(
+    db: Session, case_id: int, skip: int = 0, limit: int = 50
+) -> List[Report]:
     return (
         db.query(Report)
         .filter(Report.case_id == case_id)

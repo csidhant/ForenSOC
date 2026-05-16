@@ -28,7 +28,9 @@ def _read_tail(path: Path, max_chars: int = 80000) -> str:
         return ""
 
 
-def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Optional[int]) -> PCAPAnalysis:
+def analyze_pcap_for_evidence(
+    db: Session, evidence_id: int, analyzed_by: Optional[int]
+) -> PCAPAnalysis:
     ev = get_evidence(db, evidence_id)
     if not ev or not ev.stored_path:
         raise ValueError("Evidence not found or missing file")
@@ -64,7 +66,11 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
             row.zeek_files_log = _read_tail(td_path / "files.log")
             row.zeek_ssh_log = _read_tail(td_path / "ssh.log")
             if proc.returncode != 0 and proc.stderr:
-                row.zeek_conn_log = (row.zeek_conn_log or "") + "\n# zeek stderr:\n" + proc.stderr[:5000]
+                row.zeek_conn_log = (
+                    (row.zeek_conn_log or "")
+                    + "\n# zeek stderr:\n"
+                    + proc.stderr[:5000]
+                )
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as exc:
             row.zeek_conn_log = f"# Zeek failed: {exc}"
         finally:
@@ -81,15 +87,13 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
             if n >= 5000:
                 break
         cap.close()
-        pyshark_note = json.dumps({"packet_count_sampled": n, "note": "pyshark count (capped)"})
+        pyshark_note = json.dumps(
+            {"packet_count_sampled": n, "note": "pyshark count (capped)"}
+        )
     except Exception as exc:  # noqa: BLE001
         pyshark_note = json.dumps({"pyshark": "unavailable", "error": str(exc)[:500]})
 
-    existing = (
-        (row.zeek_conn_log or "")
-        + "\n# pyshark:\n"
-        + pyshark_note
-    )
+    existing = (row.zeek_conn_log or "") + "\n# pyshark:\n" + pyshark_note
     row.zeek_conn_log = existing[:120000]
 
     # Heuristic detection from logs
@@ -97,9 +101,9 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
     suspicious_dns = 0
     data_exfil = 0
     suspicious_downloads = 0
-    
+
     findings = []
-    
+
     if row.zeek_conn_log:
         try:
             unique_ports = set()
@@ -119,26 +123,34 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
                             total_bytes_out += bytes_sent
                         except (ValueError, IndexError):
                             pass
-            
+
             if len(unique_ports) > 20:
                 port_scans = 1
-                findings.append({
-                    "title": "Network Port Scan Detected",
-                    "severity": "Medium",
-                    "type": "Network",
-                    "desc": f"Observed traffic to {len(unique_ports)} unique destination ports, suggesting a port scan.",
-                    "mitre": ("Discovery", "Network Service Discovery", "T1046")
-                })
-                
-            if total_bytes_out > 100 * 1024 * 1024: # 100MB
+                findings.append(
+                    {
+                        "title": "Network Port Scan Detected",
+                        "severity": "Medium",
+                        "type": "Network",
+                        "desc": f"Observed traffic to {len(unique_ports)} unique destination ports, suggesting a port scan.",
+                        "mitre": ("Discovery", "Network Service Discovery", "T1046"),
+                    }
+                )
+
+            if total_bytes_out > 100 * 1024 * 1024:  # 100MB
                 data_exfil = 1
-                findings.append({
-                    "title": "Large Outbound Data Transfer",
-                    "severity": "High",
-                    "type": "Data Exfiltration",
-                    "desc": f"Detected over {total_bytes_out // (1024*1024)}MB of outbound data transfer.",
-                    "mitre": ("Exfiltration", "Exfiltration Over Alternative Protocol", "T1048")
-                })
+                findings.append(
+                    {
+                        "title": "Large Outbound Data Transfer",
+                        "severity": "High",
+                        "type": "Data Exfiltration",
+                        "desc": f"Detected over {total_bytes_out // (1024*1024)}MB of outbound data transfer.",
+                        "mitre": (
+                            "Exfiltration",
+                            "Exfiltration Over Alternative Protocol",
+                            "T1048",
+                        ),
+                    }
+                )
         except Exception:
             pass
 
@@ -147,19 +159,20 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
             lines = row.zeek_dns_log.split("\n")
             domains = {}
             long_queries = []
-            
+
             for line in lines:
                 if line.startswith("#") or not line.strip():
                     continue
                 parts = line.split("\t")
                 if len(parts) > 8:
                     query = parts[9] if len(parts) > 9 else ""
-                    if not query: continue
-                    
+                    if not query:
+                        continue
+
                     # Heuristic 1: Query length
                     if len(query) > 100:
                         long_queries.append(query)
-                    
+
                     # Heuristic 2: Subdomain entropy/count
                     base_domain = ".".join(query.split(".")[-2:])
                     if base_domain not in domains:
@@ -168,43 +181,61 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
 
             # Check heuristics
             for dom, queries in domains.items():
-                if len(queries) > 50: # High number of unique subdomains
+                if len(queries) > 50:  # High number of unique subdomains
                     suspicious_dns += 1
-                    findings.append({
-                        "title": "Possible DNS Tunneling Detected",
-                        "severity": "High",
-                        "type": "C2",
-                        "desc": f"Detected high volume of unique subdomains ({len(queries)}) for domain: {dom}",
-                        "mitre": ("Command and Control", "Protocol Tunneling", "T1572")
-                    })
-            
+                    findings.append(
+                        {
+                            "title": "Possible DNS Tunneling Detected",
+                            "severity": "High",
+                            "type": "C2",
+                            "desc": f"Detected high volume of unique subdomains ({len(queries)}) for domain: {dom}",
+                            "mitre": (
+                                "Command and Control",
+                                "Protocol Tunneling",
+                                "T1572",
+                            ),
+                        }
+                    )
+
             if len(long_queries) > 5:
                 suspicious_dns += 1
-                findings.append({
-                    "title": "Suspiciously Long DNS Queries",
-                    "severity": "Medium",
-                    "type": "Network",
-                    "desc": f"Detected {len(long_queries)} DNS queries exceeding 100 characters, common in C2/Tunneling.",
-                    "mitre": ("Command and Control", "Protocol Tunneling", "T1572")
-                })
+                findings.append(
+                    {
+                        "title": "Suspiciously Long DNS Queries",
+                        "severity": "Medium",
+                        "type": "Network",
+                        "desc": f"Detected {len(long_queries)} DNS queries exceeding 100 characters, common in C2/Tunneling.",
+                        "mitre": ("Command and Control", "Protocol Tunneling", "T1572"),
+                    }
+                )
         except Exception:
             pass
 
     if row.zeek_http_log or row.zeek_files_log:
         try:
             # Check for suspicious download patterns
-            patterns = ["raw.githubusercontent.com", "pastebin.com/raw", "github.com/.*/raw/"]
+            patterns = [
+                "raw.githubusercontent.com",
+                "pastebin.com/raw",
+                "github.com/.*/raw/",
+            ]
             all_logs = (row.zeek_http_log or "") + (row.zeek_files_log or "")
             for p in patterns:
                 if p in all_logs:
                     suspicious_downloads += 1
-                    findings.append({
-                        "title": "Suspicious Script Download",
-                        "severity": "Medium",
-                        "type": "Malware",
-                        "desc": f"Detected network activity associated with common script/malware hosting pattern: {p}",
-                        "mitre": ("Execution", "Command and Scripting Interpreter", "T1059")
-                    })
+                    findings.append(
+                        {
+                            "title": "Suspicious Script Download",
+                            "severity": "Medium",
+                            "type": "Malware",
+                            "desc": f"Detected network activity associated with common script/malware hosting pattern: {p}",
+                            "mitre": (
+                                "Execution",
+                                "Command and Scripting Interpreter",
+                                "T1059",
+                            ),
+                        }
+                    )
                     break
         except Exception:
             pass
@@ -217,7 +248,7 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
     # Generate Alerts in DB
     from app.crud.alert import AlertCRUD
     import time
-    
+
     for f in findings:
         AlertCRUD.create_alert(
             db,
@@ -230,7 +261,7 @@ def analyze_pcap_for_evidence(db: Session, evidence_id: int, analyzed_by: Option
             mitre_tactic=f["mitre"][0],
             mitre_technique=f["mitre"][1],
             mitre_id=f["mitre"][2],
-            created_by=analyzed_by
+            created_by=analyzed_by,
         )
 
     db.add(row)
