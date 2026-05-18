@@ -18,6 +18,8 @@ from app.crud.event import EventCRUD
 from app.services.log_parser import LogParserService
 from app.api.dependencies import get_current_analyst_user
 from app.models.user import User
+from app.services.geoip_service import geoip_service
+
 
 router = APIRouter(prefix="/api/logs", tags=["logs"])
 
@@ -41,6 +43,9 @@ async def ingest_log(
     )
 
     normalized_data = LogParserService.parse(raw_event.raw_data, raw_event.log_source)
+    # Perform GeoIP lookup once
+    geo_data = geoip_service.get_location(normalized_data.get("source_ip")) if normalized_data.get("source_ip") else None
+
     normalized_event = EventCRUD.create_normalized_event(
         db,
         raw_event_id=raw_event.id,
@@ -57,13 +62,21 @@ async def ingest_log(
         description=normalized_data.get("description"),
         case_id=raw_event.case_id,
         raw_log=raw_event.raw_data,
+        # Add GeoIP (New)
+        source_country=geo_data.get("country") if geo_data else None,
+        source_city=geo_data.get("city") if geo_data else None,
+        source_lat=geo_data.get("lat") if geo_data else None,
+        source_lng=geo_data.get("lng") if geo_data else None,
     )
+
+
 
     # Process event through detection engine
     from app.services.detection_engine import DetectionEngine
 
     detection_engine = DetectionEngine(db)
-    alerts = detection_engine.process_event(normalized_event)
+    alerts = await detection_engine.process_event(normalized_event)
+
 
     return LogIngestResponse(
         raw_event=raw_event,

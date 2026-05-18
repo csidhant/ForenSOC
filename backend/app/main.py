@@ -13,6 +13,8 @@ from app.config import get_settings
 from app.database import engine, SessionLocal
 from app.models.base import Base
 from app.models.detection import DetectionRule
+from app.services.socket_manager import socket_manager
+
 
 # Create all tables
 Base.metadata.create_all(bind=engine)
@@ -37,14 +39,19 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-# Add CORS middleware
+# Add CORS middleware — ALLOWED_ORIGINS is a @property that reads env at runtime
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Mount SocketIO
+app.mount("/socket.io", socket_manager.app)
+
 
 
 # Root endpoint

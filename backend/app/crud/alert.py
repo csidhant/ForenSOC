@@ -70,7 +70,12 @@ class AlertCRUD:
         mitre_technique: Optional[str] = None,
         mitre_id: Optional[str] = None,
         created_by: Optional[int] = None,
+        source_country: Optional[str] = None,
+        source_city: Optional[str] = None,
+        source_lat: Optional[float] = None,
+        source_lng: Optional[float] = None,
     ) -> Alert:
+
         """Create a new alert."""
         alert = Alert(
             alert_number=alert_number,
@@ -90,7 +95,12 @@ class AlertCRUD:
             mitre_technique=mitre_technique,
             mitre_id=mitre_id,
             created_by=created_by,
+            source_country=source_country,
+            source_city=source_city,
+            source_lat=source_lat,
+            source_lng=source_lng,
         )
+
 
         db.add(alert)
         db.commit()

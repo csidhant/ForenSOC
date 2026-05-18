@@ -2,19 +2,102 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="ForenSOC - Advanced Integrated SOC and Digital Forensics Platform" />
-    <title>ForenSOC - Advanced DFIR & SOC Platform</title>
+
+    <!-- SEO & Meta -->
+    <title>ForenSOC — Advanced DFIR & Security Operations Center</title>
+    <meta name="description" content="ForenSOC is an enterprise-grade Digital Forensics and Incident Response (DFIR) platform with real-time threat detection, MITRE ATT&CK mapping, evidence management, and automated case management." />
+    <meta name="keywords" content="DFIR, SOC, digital forensics, incident response, threat detection, MITRE ATT&CK, security operations, ForenSOC" />
+    <meta name="author" content="ForenSOC Team" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="ForenSOC — Advanced DFIR & SOC Platform" />
+    <meta property="og:description" content="Enterprise-grade Digital Forensics and Security Operations Center with real-time threat intelligence." />
+    <meta property="og:type" content="website" />
+
+    <!-- Favicon (SVG shield) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%233B82F6'/><stop offset='1' stop-color='%238B5CF6'/></linearGradient></defs><path fill='url(%23g)' d='M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'/></svg>" />
+
+    <!-- Preconnect to Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Base Styles -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { font-size: 16px; }
+      body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overflow-x: hidden;
+      }
+      #root { min-height: 100vh; display: flex; flex-direction: column; }
+
+      /* Loading splash */
+      #app-loading {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background: #0A0F1E;
+        transition: opacity 0.4s ease;
+      }
+      #app-loading .logo {
+        width: 64px; height: 64px; border-radius: 16px;
+        background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 20px;
+        box-shadow: 0 0 40px rgba(59,130,246,0.4);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+      #app-loading svg { width: 36px; height: 36px; fill: white; }
+      #app-loading p { color: #64748B; font-size: 0.875rem; margin-top: 12px; }
+      #app-loading .brand { color: #F1F5F9; font-weight: 700; font-size: 1.5rem; }
+
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(59,130,246,0.4); }
+        50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(59,130,246,0.6); }
+      }
+
+      /* Spinner */
+      .spinner {
+        width: 24px; height: 24px;
+        border: 2px solid rgba(255,255,255,0.2);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin-top: 16px;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
+    <!-- Loading splash (removed by React on mount) -->
+    <div id="app-loading">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+        </svg>
+      </div>
+      <span class="brand">ForenSOC</span>
+      <p>Initializing secure operations environment…</p>
+      <div class="spinner"></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Hide loading splash once React mounts
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          var el = document.getElementById('app-loading');
+          if (el) { el.style.opacity = '0'; setTimeout(function() { el.remove(); }, 400); }
+        }, 800);
+      });
+    </script>
   </body>
 </html>

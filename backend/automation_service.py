@@ -1,6 +1,8 @@
 import os
 import time
 import shutil
+import asyncio
+
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from app.database import SessionLocal
@@ -17,6 +19,17 @@ class AutoIngestHandler(FileSystemEventHandler):
     Automatically ingests text files as logs.
     """
     def on_created(self, event):
+        if event.is_directory:
+            return
+        
+        # We need to run the async handler in a thread-safe way or using an event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.async_handle_created(event))
+        loop.close()
+
+    async def async_handle_created(self, event):
+
         if event.is_directory:
             return
         
@@ -65,7 +78,8 @@ class AutoIngestHandler(FileSystemEventHandler):
             
             # Process Detection
             engine = DetectionEngine(db)
-            alerts = engine.process_event(normalized_event)
+            alerts = await engine.process_event(normalized_event)
+
             
             print(f"[AUTO-INGEST] Successfully processed {filename}. Generated {len(alerts)} alerts.")
             
@@ -111,7 +125,8 @@ class LocalMachineCollector:
             db.refresh(case)
         return case
 
-    def poll_security_logs(self):
+    async def poll_security_logs(self):
+
         print(f"[LOCAL-COLLECTOR] Checking Windows Security Logs...")
         
         ps_command = (
@@ -162,7 +177,8 @@ class LocalMachineCollector:
                     )
                     
                     engine = DetectionEngine(db)
-                    engine.process_event(normalized_event)
+                    await engine.process_event(normalized_event)
+
                 
                 db.commit()
             finally:
@@ -171,9 +187,10 @@ class LocalMachineCollector:
         except Exception as e:
             print(f"[LOCAL-COLLECTOR] Error polling Windows logs: {e}")
 
-def start_auto_watcher():
+async def start_auto_watcher():
     """Starts the directory watcher and the local collector."""
     watch_dir = os.path.join(os.getcwd(), 'ingest_drop')
+
     os.makedirs(watch_dir, exist_ok=True)
     
     print(f"[*] Starting ForenSOC Automation Engine...")
@@ -190,11 +207,12 @@ def start_auto_watcher():
     try:
         while True:
             # Check local logs every 60 seconds
-            local_collector.poll_security_logs()
-            time.sleep(60) 
+            await local_collector.poll_security_logs()
+            await asyncio.sleep(60) 
     except KeyboardInterrupt:
         observer.stop()
     observer.join()
 
 if __name__ == "__main__":
-    start_auto_watcher()
+    asyncio.run(start_auto_watcher())
+

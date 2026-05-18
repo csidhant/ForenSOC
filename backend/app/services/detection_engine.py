@@ -16,6 +16,9 @@ from app.models.alert import Alert
 from app.models.user import User
 from app.database import get_db
 from app.crud.alert import AlertCRUD
+from app.services.geoip_service import geoip_service
+from app.services.socket_manager import socket_manager
+
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +29,12 @@ class DetectionEngine:
     def __init__(self, db: Session):
         self.db = db
 
-    def process_event(self, event: NormalizedEvent) -> List[Alert]:
+    async def process_event(self, event: NormalizedEvent) -> List[Alert]:
         """
         Process a single normalized event against all enabled detection rules.
         Returns list of alerts generated.
         """
+
         alerts_generated = []
 
         # Get all enabled rules that match the event type (if specified)
@@ -50,8 +54,9 @@ class DetectionEngine:
         for rule in rules:
             try:
                 if self._matches_rule(event, rule):
-                    alert = self._generate_alert(event, rule)
+                    alert = await self._generate_alert(event, rule)
                     if alert:
+
                         alerts_generated.append(alert)
                         logger.info(
                             f"Generated alert {alert.alert_number} from rule {rule.name}"
@@ -63,7 +68,7 @@ class DetectionEngine:
 
         return alerts_generated
 
-    def process_events_batch(self, events: List[NormalizedEvent]) -> List[Alert]:
+    async def process_events_batch(self, events: List[NormalizedEvent]) -> List[Alert]:
         """
         Process a batch of normalized events.
         Returns all alerts generated.
@@ -71,8 +76,9 @@ class DetectionEngine:
         all_alerts = []
 
         for event in events:
-            alerts = self.process_event(event)
+            alerts = await self.process_event(event)
             all_alerts.extend(alerts)
+
 
         return all_alerts
 
@@ -139,12 +145,15 @@ class DetectionEngine:
 
         return True
 
-    def _generate_alert(
+    async def _generate_alert(
         self, event: NormalizedEvent, rule: DetectionRule
     ) -> Optional[Alert]:
         """
         Generate an alert from a matching event and rule.
         """
+        # Resolve GeoIP for source_ip
+        geo_data = geoip_service.get_location(event.source_ip) if event.source_ip else None
+        
         # Generate unique alert number
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         alert_number = f"ALERT-{rule.rule_type.upper()}-{timestamp}"
@@ -155,7 +164,7 @@ class DetectionEngine:
             "title": f"{rule.name} - {event.event_type or 'Unknown Event'}",
             "description": f"Detection rule '{rule.name}' triggered by event from {event.log_source}",
             "severity": rule.severity,
-            "status": "unreviewed",
+            "status": "New",
             "alert_type": rule.rule_type,
             "source_ip": event.source_ip,
             "dest_ip": event.dest_ip,
@@ -170,11 +179,34 @@ class DetectionEngine:
             "raw_event_id": event.raw_event_id,
             "detection_rule_id": rule.id,
             "created_by": None,  # System-generated
+            "source_country": geo_data.get("country") if geo_data else None,
+            "source_city": geo_data.get("city") if geo_data else None,
+            "source_lat": geo_data.get("lat") if geo_data else None,
+            "source_lng": geo_data.get("lng") if geo_data else None,
         }
 
         try:
             alert = AlertCRUD.create_alert(db=self.db, **alert_data)
+            
+            # Broadcast via WebSocket
+            try:
+                await socket_manager.emit_alert({
+                    "id": alert.id,
+                    "alert_number": alert.alert_number,
+                    "title": alert.title,
+                    "severity": alert.severity,
+                    "status": alert.status,
+                    "source_ip": alert.source_ip,
+                    "source_country": alert.source_country,
+                    "source_lat": alert.source_lat,
+                    "source_lng": alert.source_lng,
+                    "detected_time": str(alert.detected_time)
+                })
+            except Exception as se:
+                logger.error(f"WebSocket broadcast failed: {se}")
+
             return alert
+
         except Exception as e:
             logger.error(f"Failed to create alert for rule {rule.name}: {e}")
             return None

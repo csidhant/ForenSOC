@@ -75,7 +75,12 @@ class EventCRUD:
         description: Optional[str] = None,
         case_id: Optional[int] = None,
         raw_log: Optional[str] = None,
+        source_country: Optional[str] = None,
+        source_city: Optional[str] = None,
+        source_lat: Optional[float] = None,
+        source_lng: Optional[float] = None,
     ) -> NormalizedEvent:
+
         normalized_event = NormalizedEvent(
             raw_event_id=raw_event_id,
             event_timestamp=event_timestamp,
@@ -91,7 +96,12 @@ class EventCRUD:
             description=description,
             case_id=case_id,
             raw_log=raw_log,
+            source_country=source_country,
+            source_city=source_city,
+            source_lat=source_lat,
+            source_lng=source_lng,
         )
+
         db.add(normalized_event)
         db.commit()
         db.refresh(normalized_event)

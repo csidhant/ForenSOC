@@ -1,0 +1,65 @@
+# ============================================================
+# ForenSOC — .gitignore
+# Never commit secrets, build artifacts, or local databases
+# ============================================================
+
+# --- Secrets & Environment ---
+.env
+.env.local
+.env.production.local
+backend/.env
+frontend-react/.env.local
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Database (NEVER commit this) ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Uploads (user data — not for git) ---
+backend/uploads/
+uploads/
+backend/ingest_drop/
+
+# --- Node / Frontend ---
+node_modules/
+frontend-react/node_modules/
+frontend-react/dist/
+frontend-react/.vercel/
+.cache/
+*.tsbuildinfo
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+logs/
+
+# --- Docker ---
+*.env.docker
+
+# --- Windows ---
+desktop.ini
+$RECYCLE.BIN/

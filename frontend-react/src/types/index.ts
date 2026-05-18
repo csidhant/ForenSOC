@@ -90,6 +90,8 @@ export interface Case {
 export enum CaseStatus {
   OPEN = 'open',
   IN_PROGRESS = 'in_progress',
+  PENDING = 'pending',
+  RESOLVED = 'resolved',
   CLOSED = 'closed',
   ON_HOLD = 'on_hold',
 }

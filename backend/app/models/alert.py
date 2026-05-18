@@ -2,7 +2,8 @@
 Alert model for ForenSOC detection and alerting.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Float, func
+
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -37,6 +38,14 @@ class Alert(BaseModel):
     dest_port = Column(Integer, nullable=True)
     hostname = Column(String(255), nullable=True)
     username = Column(String(255), nullable=True)
+
+    # Geographic Context (New)
+    source_country = Column(String(100), nullable=True)
+    source_city = Column(String(100), nullable=True)
+    source_lat = Column(Float, nullable=True)
+    source_lng = Column(Float, nullable=True)
+
+
 
     # Timeline
     event_time = Column(DateTime, nullable=True)

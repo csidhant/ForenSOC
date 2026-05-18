@@ -10,8 +10,10 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     BigInteger,
+    Float,
     func,
 )
+
 from sqlalchemy.orm import relationship
 from app.models.base import BaseModel
 
@@ -61,6 +63,14 @@ class NormalizedEvent(BaseModel):
     dest_ip = Column(String(45), nullable=True, index=True)
     source_port = Column(Integer, nullable=True)
     dest_port = Column(Integer, nullable=True)
+
+    # Geographic Context (New)
+    source_country = Column(String(100), nullable=True)
+    source_city = Column(String(100), nullable=True)
+    source_lat = Column(Float, nullable=True)
+    source_lng = Column(Float, nullable=True)
+
+
 
     # Identity
     username = Column(String(255), nullable=True)

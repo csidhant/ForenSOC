@@ -1,346 +1,438 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Chip,
-  CircularProgress,
-  Alert,
-  Grid,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
+  Box, Button, Card, CardContent, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField, Typography, Chip, CircularProgress,
+  Alert as MuiAlert, Grid, MenuItem, Select, FormControl, InputLabel,
+  InputAdornment, IconButton, Tooltip, Stack,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Skeleton,
 } from '@mui/material';
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
+  Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon,
+  Search as SearchIcon, Refresh as RefreshIcon,
+  Warning as WarningIcon, Error as ErrorIcon, Info as InfoIcon,
+  CheckCircle as CheckIcon, RadioButtonUnchecked as NewIcon,
+  HourglassEmpty as PendingIcon, Close as CloseIcon,
+  DoneAll as ResolveIcon, Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { Alert as AlertType, AlertSeverity, Case } from '../types';
+import { Alert as AlertType, AlertSeverity, AlertStatus } from '../types';
 import { apiService } from '@services/apiService';
-import { formatDate, getStatusColor } from '@utils/helpers';
+import { formatDate } from '@utils/helpers';
+
+const SEVERITY_CONFIG: Record<string, { color: 'error'|'warning'|'info'|'success'|'default'; icon: React.ReactNode; bg: string }> = {
+  critical: { color: 'error', icon: <ErrorIcon fontSize="small" />, bg: 'rgba(239,68,68,0.1)' },
+  high:     { color: 'warning', icon: <WarningIcon fontSize="small" />, bg: 'rgba(245,158,11,0.1)' },
+  medium:   { color: 'info', icon: <InfoIcon fontSize="small" />, bg: 'rgba(6,182,212,0.1)' },
+  low:      { color: 'success', icon: <CheckIcon fontSize="small" />, bg: 'rgba(16,185,129,0.1)' },
+  info:     { color: 'default', icon: <InfoIcon fontSize="small" />, bg: 'rgba(148,163,184,0.1)' },
+};
+
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  new:         { label: 'New', color: '#EF4444' },
+  in_progress: { label: 'In Progress', color: '#F59E0B' },
+  resolved:    { label: 'Resolved', color: '#10B981' },
+  false_positive: { label: 'False Positive', color: '#6B7280' },
+};
+
+const StatCard = ({ label, value, color, icon }: any) => (
+  <Card>
+    <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: '12px !important' }}>
+      <Box sx={{ color, display: 'flex' }}>{icon}</Box>
+      <Box>
+        <Typography variant="h5" sx={{ fontWeight: 700, lineHeight: 1 }}>{value}</Typography>
+        <Typography variant="caption" color="text.secondary">{label}</Typography>
+      </Box>
+    </CardContent>
+  </Card>
+);
 
 const AlertsPage: React.FC = () => {
   const [alerts, setAlerts] = useState<AlertType[]>([]);
-  const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [severityFilter, setSeverityFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [openDialog, setOpenDialog] = useState(false);
+  const [viewDialog, setViewDialog] = useState<AlertType | null>(null);
   const [editingAlert, setEditingAlert] = useState<AlertType | null>(null);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    severity: AlertSeverity.MEDIUM,
-    alert_type: '',
-    source_ip: '',
-    dest_ip: '',
-    source_port: '',
-    dest_port: '',
-    hostname: '',
-    username: '',
-    case_id: '',
-  });
+  const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    title: '', description: '', severity: AlertSeverity.MEDIUM,
+    alert_type: '', source_ip: '', dest_ip: '',
+    source_port: '', dest_port: '', hostname: '', username: '', case_id: '',
+  });
 
-  useEffect(() => {
-    loadAlerts();
-    loadCases();
-    loadStats();
-  }, []);
-
-  const loadAlerts = async () => {
+  const loadAlerts = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiService.getAlerts('', 1, 50);
-      setAlerts(data || []);
+      const [alertData, statsData] = await Promise.all([
+        apiService.getAlerts('', 1, 100),
+        apiService.getAlertStats().catch(() => null),
+      ]);
+      setAlerts(alertData || []);
+      setStats(statsData);
     } catch (err: any) {
       setError('Failed to load alerts');
-      console.error('Error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadCases = async () => {
-    try {
-      const data = await apiService.getCases(1, 100);
-      setCases(data.items || []);
-    } catch (err: any) {
-      console.error('Error loading cases:', err);
-    }
-  };
+  useEffect(() => { loadAlerts(); }, [loadAlerts]);
 
-  const loadStats = async () => {
-    try {
-      const data = await apiService.getAlertStats();
-      setStats(data);
-    } catch (err: any) {
-      console.error('Error loading stats:', err);
-    }
-  };
+  // Real-time: listen for new WebSocket alerts
+  useEffect(() => {
+    const handler = (e: CustomEvent) => {
+      setAlerts(prev => [e.detail, ...prev]);
+      setStats((s: any) => s ? { ...s, total_alerts: (s.total_alerts || 0) + 1, new_alerts: (s.new_alerts || 0) + 1 } : s);
+    };
+    window.addEventListener('forensoc-alert', handler as EventListener);
+    return () => window.removeEventListener('forensoc-alert', handler as EventListener);
+  }, []);
 
-  const handleOpenDialog = (alertData?: AlertType) => {
-    if (alertData) {
-      setEditingAlert(alertData);
-      setFormData({
-        title: alertData.title,
-        description: alertData.description || '',
-        severity: alertData.severity,
-        alert_type: (alertData as any).alert_type || '',
-        source_ip: (alertData as any).source_ip || '',
-        dest_ip: (alertData as any).dest_ip || '',
-        source_port: (alertData as any).source_port?.toString() || '',
-        dest_port: (alertData as any).dest_port?.toString() || '',
-        hostname: (alertData as any).hostname || '',
-        username: (alertData as any).username || '',
-        case_id: alertData.case_id?.toString() || '',
-      });
-    } else {
-      setEditingAlert(null);
-      setFormData({
-        title: '',
-        description: '',
-        severity: AlertSeverity.MEDIUM,
-        alert_type: '',
-        source_ip: '',
-        dest_ip: '',
-        source_port: '',
-        dest_port: '',
-        hostname: '',
-        username: '',
-        case_id: '',
-      });
-    }
+  const filtered = alerts.filter(a => {
+    const matchesSeverity = severityFilter === 'all' || a.severity === severityFilter;
+    const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
+    const matchesSearch = !search || a.title?.toLowerCase().includes(search.toLowerCase()) || (a as any).source_ip?.includes(search);
+    return matchesSeverity && matchesStatus && matchesSearch;
+  });
+
+  const handleOpenCreate = () => {
+    setEditingAlert(null);
+    setFormData({ title: '', description: '', severity: AlertSeverity.MEDIUM, alert_type: '', source_ip: '', dest_ip: '', source_port: '', dest_port: '', hostname: '', username: '', case_id: '' });
     setOpenDialog(true);
   };
 
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingAlert(null);
+  const handleOpenEdit = (alert: AlertType) => {
+    setEditingAlert(alert);
+    setFormData({
+      title: alert.title, description: alert.description || '',
+      severity: alert.severity, alert_type: (alert as any).alert_type || '',
+      source_ip: (alert as any).source_ip || '', dest_ip: (alert as any).dest_ip || '',
+      source_port: (alert as any).source_port?.toString() || '',
+      dest_port: (alert as any).dest_port?.toString() || '',
+      hostname: (alert as any).hostname || '',
+      username: (alert as any).username || '',
+      case_id: alert.case_id?.toString() || '',
+    });
+    setOpenDialog(true);
   };
 
-  const handleSaveAlert = async () => {
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const data = {
+      const payload = {
         ...formData,
         source_port: formData.source_port ? parseInt(formData.source_port) : undefined,
         dest_port: formData.dest_port ? parseInt(formData.dest_port) : undefined,
-        case_id: formData.case_id ? formData.case_id : undefined,
-        alert_number: editingAlert ? undefined : `ALERT-${Date.now()}`, // Generate alert number for new alerts
+        case_id: formData.case_id || undefined,
       };
-
       if (editingAlert) {
-        await apiService.updateAlert(editingAlert.id, data);
+        await apiService.updateAlert(editingAlert.id, payload);
       } else {
-        await apiService.createAlert(data);
+        await apiService.createAlert({ ...payload, alert_number: `ALERT-${Date.now()}` });
       }
-      loadAlerts();
-      loadStats();
-      handleCloseDialog();
+      await loadAlerts();
+      setOpenDialog(false);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to save alert');
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDeleteAlert = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this alert?')) {
-      try {
-        await apiService.deleteAlert(id);
-        loadAlerts();
-        loadStats();
-      } catch (err: any) {
-        setError('Failed to delete alert');
-      }
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this alert permanently?')) return;
+    try {
+      await apiService.deleteAlert(id);
+      setAlerts(prev => prev.filter(a => a.id !== id));
+    } catch {
+      setError('Failed to delete alert');
     }
   };
 
-
-  const getSeverityColor = (severity: AlertSeverity) => {
-    switch (severity) {
-      case 'critical': return 'error';
-      case 'high': return 'warning';
-      case 'medium': return 'info';
-      case 'low': return 'success';
-      default: return 'default';
+  const handleResolve = async (alert: AlertType) => {
+    try {
+      await apiService.updateAlert(alert.id, { status: AlertStatus.RESOLVED });
+      setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, status: AlertStatus.RESOLVED } : a));
+    } catch {
+      setError('Failed to resolve alert');
     }
   };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600 }}>
-          Alerts
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
-          New Alert
-        </Button>
+      {/* Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>Security Alerts</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Monitor, triage, and respond to security events in real-time
+          </Typography>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Refresh">
+            <IconButton onClick={loadAlerts} disabled={loading}>
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate}
+            sx={{ background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)', fontWeight: 700 }}>
+            New Alert
+          </Button>
+        </Stack>
       </Box>
 
-      {stats && (
+      {/* Stat Cards */}
+      {loading ? (
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Total Alerts
-                </Typography>
-                <Typography variant="h4">{stats.total_alerts}</Typography>
-              </CardContent>
-            </Card>
+          {[...Array(4)].map((_, i) => (
+            <Grid item xs={6} md={3} key={i}><Skeleton variant="rounded" height={70} /></Grid>
+          ))}
+        </Grid>
+      ) : stats && (
+        <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid item xs={6} md={3}>
+            <StatCard label="Total Alerts" value={stats.total_alerts || alerts.length} color="#3B82F6" icon={<InfoIcon />} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  New Alerts
-                </Typography>
-                <Typography variant="h4" color="error">{stats.new_alerts}</Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={6} md={3}>
+            <StatCard label="New / Unread" value={stats.new_alerts || 0} color="#EF4444" icon={<NewIcon />} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  In Progress
-                </Typography>
-                <Typography variant="h4" color="warning">{stats.in_progress_alerts}</Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={6} md={3}>
+            <StatCard label="Critical" value={stats.critical_alerts || 0} color="#DC2626" icon={<ErrorIcon />} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Typography color="textSecondary" gutterBottom>
-                  Critical
-                </Typography>
-                <Typography variant="h4" color="error">{stats.critical_alerts}</Typography>
-              </CardContent>
-            </Card>
+          <Grid item xs={6} md={3}>
+            <StatCard label="In Progress" value={stats.in_progress_alerts || 0} color="#F59E0B" icon={<PendingIcon />} />
           </Grid>
         </Grid>
       )}
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <MuiAlert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</MuiAlert>}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'primary.light' }}>
-              <TableCell>Title</TableCell>
-              <TableCell>Severity</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Source</TableCell>
-              <TableCell>Created</TableCell>
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {alerts.map((alert) => (
-              <TableRow key={alert.id} hover>
-                <TableCell sx={{ fontWeight: 500 }}>{alert.title}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={alert.severity}
-                    size="small"
-                    color={getSeverityColor(alert.severity) as any}
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={alert.status}
-                    size="small"
-                    sx={{ bgcolor: getStatusColor(alert.status), color: 'white' }}
-                  />
-                </TableCell>
-                <TableCell>{alert.source}</TableCell>
-                <TableCell>{formatDate(alert.created_at)}</TableCell>
-                <TableCell align="right">
-                  <Button
-                    size="small"
-                    startIcon={<EditIcon />}
-                    onClick={() => handleOpenDialog(alert)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="small"
-                    color="error"
-                    startIcon={<DeleteIcon />}
-                    onClick={() => handleDeleteAlert(alert.id)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
+      {/* Filters */}
+      <Card sx={{ mb: 2 }}>
+        <CardContent sx={{ py: '12px !important' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+            <TextField
+              size="small" placeholder="Search alerts, IPs..." value={search}
+              onChange={e => setSearch(e.target.value)} sx={{ minWidth: 240 }}
+              InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
+            />
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Severity</InputLabel>
+              <Select value={severityFilter} label="Severity" onChange={e => setSeverityFilter(e.target.value)}>
+                <MenuItem value="all">All Severities</MenuItem>
+                <MenuItem value="critical">Critical</MenuItem>
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="low">Low</MenuItem>
+                <MenuItem value="info">Info</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 140 }}>
+              <InputLabel>Status</InputLabel>
+              <Select value={statusFilter} label="Status" onChange={e => setStatusFilter(e.target.value)}>
+                <MenuItem value="all">All Statuses</MenuItem>
+                <MenuItem value="new">New</MenuItem>
+                <MenuItem value="in_progress">In Progress</MenuItem>
+                <MenuItem value="resolved">Resolved</MenuItem>
+                <MenuItem value="false_positive">False Positive</MenuItem>
+              </Select>
+            </FormControl>
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+              Showing {filtered.length} of {alerts.length}
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Alerts Table */}
+      <Card>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Severity</TableCell>
+                <TableCell>Alert</TableCell>
+                <TableCell>Source</TableCell>
+                <TableCell>Destination</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Time</TableCell>
+                <TableCell align="right">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                [...Array(8)].map((_, i) => (
+                  <TableRow key={i}>
+                    {[...Array(7)].map((_, j) => (
+                      <TableCell key={j}><Skeleton /></TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <Box sx={{ opacity: 0.5 }}>
+                      <CheckIcon sx={{ fontSize: 40, mb: 1, color: 'success.main' }} />
+                      <Typography>No alerts match your filters</Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ) : filtered.map(alert => {
+                const sev = SEVERITY_CONFIG[alert.severity] || SEVERITY_CONFIG.info;
+                const st = STATUS_CONFIG[alert.status] || { label: alert.status, color: '#6B7280' };
+                return (
+                  <TableRow key={alert.id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell>
+                      <Chip
+                        icon={sev.icon as any}
+                        label={alert.severity?.toUpperCase()}
+                        size="small"
+                        color={sev.color}
+                        variant="outlined"
+                        sx={{ fontWeight: 700, bgcolor: sev.bg }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontWeight: 600, maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {alert.title}
+                      </Typography>
+                      {(alert as any).alert_type && (
+                        <Typography variant="caption" color="text.secondary">{(alert as any).alert_type}</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                        {(alert as any).source_ip || alert.source || '—'}
+                        {(alert as any).source_port ? `:${(alert as any).source_port}` : ''}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                        {(alert as any).dest_ip || '—'}
+                        {(alert as any).dest_port ? `:${(alert as any).dest_port}` : ''}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={st.label} size="small"
+                        sx={{ bgcolor: `${st.color}20`, color: st.color, fontWeight: 600, border: `1px solid ${st.color}40` }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="caption" color="text.secondary" noWrap>
+                        {formatDate(alert.created_at)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Stack direction="row" spacing={0.5} justifyContent="flex-end">
+                        <Tooltip title="View Details">
+                          <IconButton size="small" onClick={() => setViewDialog(alert)}>
+                            <ViewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        {alert.status !== 'resolved' && (
+                          <Tooltip title="Mark Resolved">
+                            <IconButton size="small" color="success" onClick={() => handleResolve(alert)}>
+                              <ResolveIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="Edit">
+                          <IconButton size="small" color="primary" onClick={() => handleOpenEdit(alert)}>
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton size="small" color="error" onClick={() => handleDelete(alert.id)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Card>
 
-      {alerts.length === 0 && (
-        <Card sx={{ mt: 3, textAlign: 'center', p: 3 }}>
-          <Typography color="textSecondary">No alerts found. Create one to get started.</Typography>
-        </Card>
-      )}
-
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle>
-          {editingAlert ? 'Edit Alert' : 'New Alert'}
+      {/* View Detail Dialog */}
+      <Dialog open={!!viewDialog} onClose={() => setViewDialog(null)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Alert Details
+          <IconButton size="small" onClick={() => setViewDialog(null)}><CloseIcon /></IconButton>
         </DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
-          <TextField
-            label="Title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            fullWidth
-            multiline
-            rows={3}
-          />
+        <DialogContent dividers>
+          {viewDialog && (
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">TITLE</Typography>
+                <Typography variant="subtitle1" fontWeight={600}>{viewDialog.title}</Typography>
+              </Box>
+              {viewDialog.description && (
+                <Box>
+                  <Typography variant="caption" color="text.secondary">DESCRIPTION</Typography>
+                  <Typography variant="body2">{viewDialog.description}</Typography>
+                </Box>
+              )}
+              <Grid container spacing={2}>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">SEVERITY</Typography>
+                  <Box><Chip label={viewDialog.severity} size="small" color={SEVERITY_CONFIG[viewDialog.severity]?.color || 'default'} /></Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">STATUS</Typography>
+                  <Box><Chip label={viewDialog.status} size="small" /></Box>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">SOURCE IP</Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{(viewDialog as any).source_ip || '—'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">DEST IP</Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{(viewDialog as any).dest_ip || '—'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">HOSTNAME</Typography>
+                  <Typography variant="body2">{(viewDialog as any).hostname || '—'}</Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="caption" color="text.secondary">USERNAME</Typography>
+                  <Typography variant="body2">{(viewDialog as any).username || '—'}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant="caption" color="text.secondary">DETECTED AT</Typography>
+                  <Typography variant="body2">{formatDate(viewDialog.created_at)}</Typography>
+                </Grid>
+              </Grid>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewDialog(null)}>Close</Button>
+          {viewDialog && <Button variant="contained" onClick={() => { handleOpenEdit(viewDialog); setViewDialog(null); }}>Edit Alert</Button>}
+        </DialogActions>
+      </Dialog>
+
+      {/* Create/Edit Dialog */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          {editingAlert ? 'Edit Alert' : 'Create New Alert'}
+          <IconButton size="small" onClick={() => setOpenDialog(false)}><CloseIcon /></IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <TextField label="Title *" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} fullWidth autoFocus />
+          <TextField label="Description" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} fullWidth multiline rows={3} />
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Severity</InputLabel>
-                <Select
-                  value={formData.severity}
-                  label="Severity"
-                  onChange={(e) => setFormData({ ...formData, severity: e.target.value as AlertSeverity })}
-                >
+                <Select value={formData.severity} label="Severity" onChange={e => setFormData({ ...formData, severity: e.target.value as AlertSeverity })}>
                   <MenuItem value="info">Info</MenuItem>
                   <MenuItem value="low">Low</MenuItem>
                   <MenuItem value="medium">Medium</MenuItem>
@@ -350,96 +442,32 @@ const AlertsPage: React.FC = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Alert Type"
-                value={formData.alert_type}
-                onChange={(e) => setFormData({ ...formData, alert_type: e.target.value })}
-                fullWidth
-              />
+              <TextField label="Alert Type" value={formData.alert_type} onChange={e => setFormData({ ...formData, alert_type: e.target.value })} fullWidth placeholder="e.g. brute_force, port_scan" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField label="Source IP" value={formData.source_ip} onChange={e => setFormData({ ...formData, source_ip: e.target.value })} fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField label="Destination IP" value={formData.dest_ip} onChange={e => setFormData({ ...formData, dest_ip: e.target.value })} fullWidth />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <TextField label="Source Port" value={formData.source_port} onChange={e => setFormData({ ...formData, source_port: e.target.value })} fullWidth type="number" />
+            </Grid>
+            <Grid item xs={6} sm={3}>
+              <TextField label="Dest Port" value={formData.dest_port} onChange={e => setFormData({ ...formData, dest_port: e.target.value })} fullWidth type="number" />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField label="Hostname" value={formData.hostname} onChange={e => setFormData({ ...formData, hostname: e.target.value })} fullWidth />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField label="Username" value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} fullWidth />
             </Grid>
           </Grid>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Source IP"
-                value={formData.source_ip}
-                onChange={(e) => setFormData({ ...formData, source_ip: e.target.value })}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Destination IP"
-                value={formData.dest_ip}
-                onChange={(e) => setFormData({ ...formData, dest_ip: e.target.value })}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Source Port"
-                value={formData.source_port}
-                onChange={(e) => setFormData({ ...formData, source_port: e.target.value })}
-                fullWidth
-                type="number"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Destination Port"
-                value={formData.dest_port}
-                onChange={(e) => setFormData({ ...formData, dest_port: e.target.value })}
-                fullWidth
-                type="number"
-              />
-            </Grid>
-          </Grid>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Hostname"
-                value={formData.hostname}
-                onChange={(e) => setFormData({ ...formData, hostname: e.target.value })}
-                fullWidth
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Username"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                fullWidth
-              />
-            </Grid>
-          </Grid>
-          <FormControl fullWidth>
-            <InputLabel>Link to Case</InputLabel>
-            <Select
-              value={formData.case_id}
-              label="Link to Case"
-              onChange={(e) => setFormData({ ...formData, case_id: e.target.value })}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-              {cases.map((caseItem) => (
-                <MenuItem key={caseItem.id} value={caseItem.id.toString()}>
-                  {caseItem.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button
-            onClick={handleSaveAlert}
-            variant="contained"
-            disabled={!formData.title}
-          >
-            Save
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave} disabled={saving || !formData.title}>
+            {saving ? <CircularProgress size={20} /> : (editingAlert ? 'Update Alert' : 'Create Alert')}
           </Button>
         </DialogActions>
       </Dialog>
