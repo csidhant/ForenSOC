@@ -1,2 +1,11 @@
 export { default as Navigation } from './Navigation';
 export { default as Routes } from './Routes';
+export { default as HelpTooltip } from './HelpTooltip';
+export { default as EmptyState } from './EmptyState';
+export { default as ErrorFallback } from './ErrorFallback';
+export { default as SkeletonLoader } from './SkeletonLoader';
+export { default as BreadcrumbsNav } from './BreadcrumbsNav';
+export { default as GlossaryModal } from './GlossaryModal';
+export { default as CommandPalette } from './CommandPalette';
+export { default as FloatingActions } from './FloatingActions';
+export { default as StudentGuidePanel } from './StudentGuidePanel';

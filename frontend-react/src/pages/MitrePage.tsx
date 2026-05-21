@@ -21,6 +21,8 @@ import {
   Chip,
 } from '@mui/material';
 import { Security as SecurityIcon } from '@mui/icons-material';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 import { Tooltip } from '@mui/material';
 import { Case, MitreCaseSummary } from '../types';
 import { apiService } from '@services/apiService';
@@ -97,18 +99,24 @@ const MitrePage: React.FC = () => {
       {info && <Alert severity="info" sx={{ mb: 2 }} onClose={() => setInfo('')}>{info}</Alert>}
       <Card sx={{ mb: 2 }}>
         <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-          <FormControl sx={{ minWidth: 280 }} size="small">
-            <InputLabel>Case</InputLabel>
-            <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
-              <MenuItem value="">Select case</MenuItem>
-              {cases.map((c) => (
-                <MenuItem key={c.id} value={String(c.id)}>
-                  {(c.case_number || c.id) + ' — ' + c.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button variant="outlined" onClick={load} disabled={!caseId || loading}>Refresh</Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <FormControl sx={{ minWidth: 280 }} size="small">
+              <InputLabel>Case</InputLabel>
+              <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
+                <MenuItem value="">Select case</MenuItem>
+                {cases.map((c) => (
+                  <MenuItem key={c.id} value={String(c.id)}>
+                    {(c.case_number || c.id) + ' — ' + c.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title={HELP_CONTENT.mitre.techniques.title}
+              description={HELP_CONTENT.mitre.techniques.description}
+            />
+            <Button variant="outlined" onClick={load} disabled={!caseId || loading}>Refresh</Button>
+          </Box>
           <Button variant="contained" onClick={sync} disabled={!caseId || loading}>
             Sync mappings from alerts
           </Button>
@@ -137,6 +145,15 @@ const MitrePage: React.FC = () => {
         <CardContent>
           {loading ? (
             <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+          ) : !summary || summary.techniques.length === 0 ? (
+            <Box sx={{ py: 4 }}>
+              <EmptyState
+                icon={<SecurityIcon />}
+                title="No MITRE mappings yet"
+                description="Sync mappings from alerts or import MITRE tags to populate this case with ATT&CK techniques."
+                action={{ label: 'Sync mappings', onClick: sync }}
+              />
+            </Box>
           ) : (
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
@@ -149,24 +166,14 @@ const MitrePage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {!summary || summary.techniques.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4}>
-                        <Typography color="text.secondary" align="center" py={2}>
-                          No MITRE-tagged alerts for this case yet.
-                        </Typography>
-                      </TableCell>
+                  {summary.techniques.map((t, i) => (
+                    <TableRow key={`${t.technique_id}-${i}-${t.tactic || ''}`}>
+                      <TableCell>{t.technique_id}</TableCell>
+                      <TableCell>{t.technique}</TableCell>
+                      <TableCell>{t.tactic || '—'}</TableCell>
+                      <TableCell align="right">{t.count}</TableCell>
                     </TableRow>
-                  ) : (
-                    summary.techniques.map((t, i) => (
-                      <TableRow key={`${t.technique_id}-${i}-${t.tactic || ''}`}>
-                        <TableCell>{t.technique_id}</TableCell>
-                        <TableCell>{t.technique}</TableCell>
-                        <TableCell>{t.tactic || '—'}</TableCell>
-                        <TableCell align="right">{t.count}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>

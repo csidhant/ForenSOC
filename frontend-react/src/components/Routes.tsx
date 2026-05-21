@@ -5,6 +5,7 @@ import { useAuthStore } from '@utils/store';
 // Pages
 import LoginPage from '@pages/LoginPage';
 import RegisterPage from '@pages/RegisterPage';
+import OnboardingPage from '@pages/OnboardingPage';
 import DashboardPage from '@pages/DashboardPage';
 import CasesPage from '@pages/CasesPage';
 import CaseDetailPage from '@pages/CaseDetailPage';
@@ -19,6 +20,7 @@ import ReportsPage from '@pages/ReportsPage';
 import AuditLogsPage from '@pages/AuditLogsPage';
 import SettingsPage from '@pages/SettingsPage';
 import NotFoundPage from '@pages/NotFoundPage';
+import PublicSearchPage from '@pages/PublicSearchPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
@@ -40,6 +42,18 @@ const Routes: React.FC = () => {
     {
       path: '/register',
       element: isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterPage />,
+    },
+    {
+      path: '/onboarding',
+      element: (
+        <ProtectedRoute>
+          <OnboardingPage />
+        </ProtectedRoute>
+      ),
+    },
+    {
+      path: '/public/search',
+      element: <PublicSearchPage />,
     },
     {
       path: '/logs',

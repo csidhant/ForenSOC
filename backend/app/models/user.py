@@ -59,6 +59,7 @@ class User(BaseModel):
     # Role
     role_id = Column(Integer, ForeignKey("roles.id"), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    api_key = Column(String(255), unique=True, nullable=True, index=True)
 
     # Timestamps
     last_login = Column(DateTime, nullable=True)

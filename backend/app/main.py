@@ -108,17 +108,26 @@ def init_default_roles_and_admin():
             if not RoleCRUD.get_role_by_name(db, role_name):
                 RoleCRUD.create_role(db, role_name, description)
 
-        admin_user = UserCRUD.get_user_by_username(db, settings.ADMIN_USERNAME)
-        if not admin_user:
-            admin_role = RoleCRUD.get_role_by_name(db, "admin")
-            if admin_role:
-                UserCRUD.create_user(
-                    db,
-                    username=settings.ADMIN_USERNAME,
-                    email=settings.ADMIN_EMAIL,
-                    password=settings.ADMIN_PASSWORD,
-                    role_id=admin_role.id,
-                )
+        # Seed default users for each of the four roles
+        demo_users = [
+            ("admin", settings.ADMIN_USERNAME, settings.ADMIN_EMAIL, settings.ADMIN_PASSWORD),
+            ("analyst", "analyst", "analyst@forensoc.local", "analyst"),
+            ("investigator", "investigator", "investigator@forensoc.local", "investigator"),
+            ("viewer", "viewer", "viewer@forensoc.local", "viewer"),
+        ]
+
+        for role_name, username, email, password in demo_users:
+            if not UserCRUD.get_user_by_username(db, username):
+                role = RoleCRUD.get_role_by_name(db, role_name)
+                if role:
+                    UserCRUD.create_user(
+                        db,
+                        username=username,
+                        email=email,
+                        password=password,
+                        role_id=role.id,
+                    )
+                    print(f"Seeded default demo user: {username} ({role_name})")
 
         # Initialize default detection rules
         init_default_detection_rules(db)
@@ -213,6 +222,7 @@ from app.api.mitre import router as mitre_router
 from app.api.audit import router as audit_router
 from app.api.search import router as search_router
 from app.api.threat_intel import router as threat_intel_router
+from app.api.public import router as public_router
 
 # Register routers
 app.include_router(auth_router)
@@ -229,6 +239,7 @@ app.include_router(mitre_router)
 app.include_router(audit_router)
 app.include_router(search_router)
 app.include_router(threat_intel_router)
+app.include_router(public_router)
 
 if __name__ == "__main__":
     import uvicorn

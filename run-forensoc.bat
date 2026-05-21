@@ -1,96 +1,96 @@
 @echo off
-setlocal
-cd /d "%~dp0"
+:: ============================================================
+:: ForenSOC — One-Click Windows Development Launcher
+:: ============================================================
+:: Starts backend (FastAPI), automation watcher, and frontend
+:: (React/Vite) in separate windows.
+:: Usage: Double-click this file from the ForenSOC root folder.
+:: ============================================================
 
-echo ========================================
-echo  ForenSOC - start backend + frontend
-echo ========================================
+title ForenSOC Launcher
+color 0A
+echo.
+echo  ============================================================
+echo   ^|  ForenSOC — Advanced SOC ^& Digital Forensics Platform  ^|
+echo  ============================================================
 echo.
 
-where python >nul 2>nul
+:: ── Locate project root ──────────────────────────────────────
+set "ROOT=%~dp0"
+set "BACKEND=%ROOT%backend"
+set "FRONTEND=%ROOT%frontend-react"
+
+:: ── Check Python ─────────────────────────────────────────────
+where python >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] Python not found. Install Python 3.10+ and add it to PATH.
-  pause
-  exit /b 1
+    echo [ERROR] Python not found. Install from https://python.org ^(3.10+^)
+    pause & exit /b 1
 )
 
-where npm >nul 2>nul
+:: ── Check Node.js ─────────────────────────────────────────────
+where node >nul 2>&1
 if errorlevel 1 (
-  echo [ERROR] npm not found. Install Node.js LTS and add it to PATH.
-  pause
-  exit /b 1
+    echo [ERROR] Node.js not found. Install from https://nodejs.org ^(18+ LTS^)
+    pause & exit /b 1
 )
 
-if not exist "backend\venv\Scripts\activate.bat" (
-  echo [INFO] Creating Python virtual environment in backend\venv ...
-  pushd backend
-  python -m venv venv
-  if errorlevel 1 (
-    echo [ERROR] Failed to create venv.
-    popd
-    pause
-    exit /b 1
-  )
-  popd
+:: ── Backend: Create venv if missing ──────────────────────────
+if not exist "%BACKEND%\venv\" (
+    echo [1/5] Creating Python virtual environment...
+    python -m venv "%BACKEND%\venv"
 )
 
-echo [INFO] Installing / updating backend dependencies...
-pushd backend
-call venv\Scripts\activate.bat
-python -m pip install -q --upgrade pip
-pip install -q -r requirements.txt
-if errorlevel 1 (
-  echo [ERROR] pip install failed.
-  popd
-  pause
-  exit /b 1
-)
-popd
+:: ── Backend: Install requirements ────────────────────────────
+echo [2/5] Installing backend dependencies...
+call "%BACKEND%\venv\Scripts\activate.bat"
+pip install -r "%BACKEND%\requirements.txt" -q
 
-if not exist "frontend-react\node_modules\" (
-  echo [INFO] Installing frontend dependencies ^(first run may take a few minutes^)...
-  pushd frontend-react
-  call npm install
-  if errorlevel 1 (
-    echo [ERROR] npm install failed.
-    popd
-    pause
-    exit /b 1
-  )
-  popd
+:: ── Backend: Copy .env if missing ────────────────────────────
+if not exist "%BACKEND%\.env" (
+    echo [3/5] Creating backend .env from template...
+    copy "%BACKEND%\.env.example" "%BACKEND%\.env" >nul
+    echo        ^> Review backend\.env and update SECRET_KEY before production use.
 ) else (
-  echo [INFO] frontend-react\node_modules exists — skipping npm install.
-  echo          Delete that folder if you need a clean install.
+    echo [3/5] Backend .env already exists — skipping copy.
 )
 
-if not exist "backend\.env" if exist "backend\.env.example" (
-  echo [INFO] Creating backend\.env from .env.example
-  copy /Y "backend\.env.example" "backend\.env" >nul
+:: ── Frontend: Install node_modules if missing ─────────────────
+if not exist "%FRONTEND%\node_modules\" (
+    echo [4/5] Installing frontend dependencies ^(npm install^)...
+    cd /d "%FRONTEND%"
+    call npm install
+) else (
+    echo [4/5] node_modules present — skipping npm install.
 )
 
-if not exist "frontend-react\.env" if exist "frontend-react\.env.example" (
-  echo [INFO] Creating frontend-react\.env from .env.example
-  copy /Y "frontend-react\.env.example" "frontend-react\.env" >nul
-)
+:: ── Launch Services ───────────────────────────────────────────
+echo [5/5] Starting all services...
 
-echo [INFO] Starting API in a new window: http://127.0.0.1:8000/api/docs
-start "ForenSOC API" cmd /k "cd /d "%~dp0backend" && call venv\Scripts\activate.bat && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
+:: FastAPI Backend
+start "ForenSOC Backend (API)" cmd /k "title ForenSOC Backend && cd /d "%BACKEND%" && call venv\Scripts\activate.bat && python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
 
+:: Automation Service (folder watcher + Windows event poller)
+timeout /t 3 /nobreak >nul
+start "ForenSOC Automation" cmd /k "title ForenSOC Automation Watcher && cd /d "%BACKEND%" && call venv\Scripts\activate.bat && python automation_service.py"
+
+:: React Frontend
 timeout /t 2 /nobreak >nul
+start "ForenSOC Frontend (React)" cmd /k "title ForenSOC Frontend && cd /d "%FRONTEND%" && npm run dev"
 
-echo [INFO] Starting Auto-Ingest Watcher (Automatic Folder Monitoring)...
-start "ForenSOC Automation" cmd /k "cd /d "%~dp0backend" && call venv\Scripts\activate.bat && python automation_service.py"
-
-timeout /t 1 /nobreak >nul
-
-echo [INFO] Starting React app in a new window: http://localhost:3000
-start "ForenSOC UI" cmd /k "cd /d "%~dp0frontend-react" && npm run dev"
-
+:: ── Done ──────────────────────────────────────────────────────
 echo.
-echo Done. Three console windows should have opened.
-echo   UI:         http://localhost:3000
-echo   API:        http://127.0.0.1:8000/api/docs
-echo   Automation: Monitoring backend\ingest_drop\
+echo  ============================================================
+echo   Services starting in separate windows. Please wait ~10s.
+echo  ============================================================
 echo.
-echo Default dev admin is in backend\.env (change for production).
+echo   Web UI      : http://localhost:3000
+echo   API Docs    : http://localhost:8000/api/docs
+echo   API Health  : http://localhost:8000/health
+echo.
+echo   Default Login: admin / ForenSOC@2024!
+echo   ^> Change your password immediately in Settings.
+echo.
+echo  Close this window or press any key to exit the launcher.
+echo  ^(The three service windows will keep running^)
+echo.
 pause

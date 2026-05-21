@@ -1,65 +1,71 @@
-# ============================================================
-# ForenSOC — .gitignore
-# Never commit secrets, build artifacts, or local databases
-# ============================================================
+# ==============================================================================
+# ForenSOC — Root .gitignore
+# ==============================================================================
 
-# --- Secrets & Environment ---
+# ── Environment / Secrets (NEVER commit these) ─────────────────────────────────
 .env
 .env.local
-.env.production.local
-backend/.env
-frontend-react/.env.local
+.env.*.local
+*.env
 
-# --- Python ---
+# ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
-*.pyc
+*$py.class
+*.so
+.Python
 venv/
-.venv/
 env/
+ENV/
+.venv/
+pip-wheel-metadata/
 *.egg-info/
 dist/
 build/
+.eggs/
 .mypy_cache/
+.ruff_cache/
 .pytest_cache/
-.coverage
 htmlcov/
+.coverage
+coverage.xml
+*.log
 
-# --- Database (NEVER commit this) ---
+# ── SQLite (dev only — use PostgreSQL in prod) ────────────────────────────────
 *.db
-*.sqlite
 *.sqlite3
 
-# --- Uploads (user data — not for git) ---
-backend/uploads/
-uploads/
-backend/ingest_drop/
+# ── Uploads / Evidence / Forensic Files ──────────────────────────────────────
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/ingest_drop/*
+!backend/ingest_drop/.gitkeep
 
-# --- Node / Frontend ---
+# ── Node / Frontend ────────────────────────────────────────────────────────────
 node_modules/
-frontend-react/node_modules/
 frontend-react/dist/
-frontend-react/.vercel/
-.cache/
-*.tsbuildinfo
+frontend-react/.cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# --- IDEs ---
+# ── Vercel ────────────────────────────────────────────────────────────────────
+.vercel/
+
+# ── IDEs & Editors ────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 .DS_Store
 Thumbs.db
 
-# --- Logs ---
-*.log
-logs/
+# ── Docker ────────────────────────────────────────────────────────────────────
+# (docker-compose.yml and Dockerfiles are tracked, overrides are not)
+docker-compose.override.yml
 
-# --- Docker ---
-*.env.docker
-
-# --- Windows ---
-desktop.ini
-$RECYCLE.BIN/
+# ── Test Artifacts ────────────────────────────────────────────────────────────
+test_*.db
+backend/migrations/versions/__pycache__/

@@ -3,9 +3,22 @@ import { toast } from 'react-toastify';
 
 class SocketService {
   private socket: Socket | null = null;
-  // In production: VITE_API_URL = https://forensoc-backend.onrender.com
-  // In local dev: falls back to same origin (proxied by Vite)
-  private url: string = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+  /**
+   * Resolve the WebSocket server URL from environment variables.
+   * Priority:
+   *   1. VITE_SOCKET_URL          — explicit override (e.g. https://forensoc-backend.onrender.com)
+   *   2. VITE_API_BASE_URL        — strip /api suffix  (e.g. /api → '' for Vite proxy)
+   *   3. '' (empty string)        — connect to same origin, Vite dev proxy handles /socket.io
+   */
+  private get url(): string {
+    if (import.meta.env.VITE_SOCKET_URL) return import.meta.env.VITE_SOCKET_URL;
+    const apiBase: string = import.meta.env.VITE_API_BASE_URL || '';
+    // If apiBase is a full URL (starts with http), strip /api to get the server root
+    if (apiBase.startsWith('http')) return apiBase.replace(/\/api\/?$/, '');
+    // Otherwise (relative /api), connect to same origin — Vite proxy or nginx handles it
+    return '';
+  }
 
   connect() {
     if (this.socket?.connected) return;

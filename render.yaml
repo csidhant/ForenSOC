@@ -1,6 +1,14 @@
-# render.yaml — Render.com Blueprint
-# Deploys the ForenSOC backend as a Web Service + PostgreSQL database
+# ==============================================================================
+# render.yaml — Render.com Infrastructure Blueprint
+# Deploys ForenSOC backend as a Web Service + managed PostgreSQL database.
 # Docs: https://render.com/docs/blueprint-spec
+#
+# HOW TO USE:
+# 1. Push this repo to GitHub.
+# 2. Go to https://dashboard.render.com → New → Blueprint
+# 3. Connect your GitHub repo — Render will auto-detect this file.
+# 4. After deploy, update ALLOWED_ORIGINS_STR with your Vercel frontend URL.
+# ==============================================================================
 
 services:
   - type: web
@@ -9,33 +17,51 @@ services:
     rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    plan: free
+    plan: free                  # upgrade to starter ($7/mo) for persistent disk
     healthCheckPath: /health
+    autoDeploy: true            # re-deploy automatically on git push to main
+
     envVars:
+      # Database — auto-wired from the managed DB below
       - key: DATABASE_URL
         fromDatabase:
           name: forensoc-db
           property: connectionString
+
+      # Security — Render generates a cryptographically secure random value
       - key: SECRET_KEY
-        generateValue: true          # Render auto-generates a secure random string
+        generateValue: true
+
+      # App settings
       - key: DEBUG
         value: "false"
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+
+      # Admin account (change password after first login!)
       - key: ADMIN_USERNAME
         value: admin
       - key: ADMIN_EMAIL
         value: admin@forensoc.local
       - key: ADMIN_PASSWORD
-        value: ForenSOC@2024!        # Change this after first login!
+        value: "ForenSOC@2024!"         # ← CHANGE after first login
+
+      # CORS: fill in your Vercel frontend URL once you have it
+      # e.g. https://forensoc.vercel.app
       - key: ALLOWED_ORIGINS_STR
-        value: ""                    # Fill in your Vercel URL after deploying frontend
-                                     # e.g. https://forensoc.vercel.app
+        value: ""                        # ← fill this in after deploying frontend
+
+      # File uploads (Render free tier has ephemeral disk — upgrade for persistence)
       - key: UPLOAD_DIR
         value: /opt/render/project/uploads
-      - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: "1440"
 
+      # Optional: Slack webhook for critical alert notifications
+      - key: SLACK_WEBHOOK_URL
+        value: ""
+
+# ── Managed PostgreSQL Database ────────────────────────────────────────────────
 databases:
   - name: forensoc-db
     databaseName: forensoc
     user: forensoc_user
-    plan: free
+    plan: free                  # 90-day free tier; upgrade to starter for production

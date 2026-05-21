@@ -40,6 +40,9 @@ import {
 import { EvidenceItem, ChainOfCustodyEntry, Case } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
+import { Inventory2 as InventoryIcon } from '@mui/icons-material';
 
 const EvidenceVaultPage: React.FC = () => {
   const [items, setItems] = useState<EvidenceItem[]>([]);
@@ -208,21 +211,27 @@ const EvidenceVaultPage: React.FC = () => {
         <CardContent>
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={4}>
-              <FormControl fullWidth size="small">
-                <InputLabel>Filter by case</InputLabel>
-                <Select
-                  value={filterCaseId}
-                  label="Filter by case"
-                  onChange={(e) => setFilterCaseId(e.target.value as string)}
-                >
-                  <MenuItem value="">All accessible cases</MenuItem>
-                  {cases.map((c) => (
-                    <MenuItem key={c.id} value={String(c.id)}>
-                      {(c.case_number || c.id) + ' — ' + c.title}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Box display="flex" alignItems="center" gap={1}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Filter by case</InputLabel>
+                  <Select
+                    value={filterCaseId}
+                    label="Filter by case"
+                    onChange={(e) => setFilterCaseId(e.target.value as string)}
+                  >
+                    <MenuItem value="">All accessible cases</MenuItem>
+                    {cases.map((c) => (
+                      <MenuItem key={c.id} value={String(c.id)}>
+                        {(c.case_number || c.id) + ' — ' + c.title}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <HelpTooltip
+                  title={HELP_CONTENT.evidence.chainOfCustody.title}
+                  description={HELP_CONTENT.evidence.chainOfCustody.description}
+                />
+              </Box>
             </Grid>
             <Grid item xs={12} md={4}>
               <Button variant="outlined" onClick={() => loadEvidence()}>
@@ -238,6 +247,19 @@ const EvidenceVaultPage: React.FC = () => {
           {loading ? (
             <Box display="flex" justifyContent="center" py={4}>
               <CircularProgress />
+            </Box>
+          ) : items.length === 0 ? (
+            <Box sx={{ py: 4 }}>
+              <EmptyState
+                icon={<InventoryIcon />}
+                title="No Evidence Files"
+                description="Upload forensic artifacts to the evidence vault. Each file is automatically verified with MD5 and SHA-256 hashes."
+                action={{
+                  label: "Upload Evidence",
+                  onClick: () => setUploadOpen(true),
+                  icon: <UploadIcon />,
+                }}
+              />
             </Box>
           ) : (
             <TableContainer component={Paper} variant="outlined">
@@ -255,16 +277,7 @@ const EvidenceVaultPage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {items.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8}>
-                        <Typography color="text.secondary" align="center" py={2}>
-                          No evidence found. Upload a file or adjust filters.
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    items.map((ev) => (
+                  {items.map((ev) => (
                       <TableRow key={ev.id} hover>
                         <TableCell>{ev.evidence_id}</TableCell>
                         <TableCell>{ev.case_id}</TableCell>
@@ -320,8 +333,7 @@ const EvidenceVaultPage: React.FC = () => {
                           </Tooltip>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>

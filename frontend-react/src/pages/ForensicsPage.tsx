@@ -17,6 +17,8 @@ import {
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import { Case, ForensicsJobResponse } from '../types';
 import { apiService } from '@services/apiService';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 
 const ForensicsPage: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
@@ -76,17 +78,23 @@ const ForensicsPage: React.FC = () => {
       )}
       <Card sx={{ mb: 2 }}>
         <CardContent>
-          <FormControl fullWidth size="small" sx={{ maxWidth: 400 }}>
-            <InputLabel>Case</InputLabel>
-            <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
-              <MenuItem value="">Select case</MenuItem>
-              {cases.map((c) => (
-                <MenuItem key={c.id} value={String(c.id)}>
-                  {(c.case_number || c.id) + ' — ' + c.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <FormControl fullWidth size="small" sx={{ maxWidth: 400 }}>
+              <InputLabel>Case</InputLabel>
+              <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
+                <MenuItem value="">Select case</MenuItem>
+                {cases.map((c) => (
+                  <MenuItem key={c.id} value={String(c.id)}>
+                    {(c.case_number || c.id) + ' — ' + c.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title={HELP_CONTENT.forensics.timeline.title}
+              description={HELP_CONTENT.forensics.timeline.description}
+            />
+          </Box>
           <TextField
             fullWidth
             size="small"
@@ -97,6 +105,17 @@ const ForensicsPage: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      {!loading && !result && (
+        <Box sx={{ py: 4 }}>
+          <EmptyState
+            icon={<UploadIcon />}
+            title="Ready to start forensic analysis"
+            description="Upload a PCAP, memory dump, or Suricata EVE file to begin automated evidence processing and threat detection."
+          />
+        </Box>
+      )}
+
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
           <Card>

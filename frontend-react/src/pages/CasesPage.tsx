@@ -16,6 +16,8 @@ import { Case, Priority, CaseStatus } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDate } from '@utils/helpers';
 import { useNavigate } from 'react-router-dom';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 
 const PRIORITY_CONFIG: Record<string, { color: 'error'|'warning'|'info'|'success'|'default'; icon: React.ReactNode; bg: string; border: string }> = {
   critical: { color: 'error', icon: <CriticalIcon fontSize="small" />, bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.25)' },
@@ -169,27 +171,39 @@ const CasesPage: React.FC = () => {
               onChange={e => setSearch(e.target.value)} sx={{ minWidth: 220 }}
               InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }}
             />
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Priority</InputLabel>
-              <Select value={priorityFilter} label="Priority" onChange={e => setPriorityFilter(e.target.value)}>
-                <MenuItem value="all">All Priorities</MenuItem>
-                <MenuItem value="critical">Critical</MenuItem>
-                <MenuItem value="high">High</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="low">Low</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Status</InputLabel>
-              <Select value={statusFilter} label="Status" onChange={e => setStatusFilter(e.target.value)}>
-                <MenuItem value="all">All Statuses</MenuItem>
-                <MenuItem value="open">Open</MenuItem>
-                <MenuItem value="in_progress">In Progress</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="resolved">Resolved</MenuItem>
-                <MenuItem value="closed">Closed</MenuItem>
-              </Select>
-            </FormControl>
+            <Box display="flex" alignItems="center" gap={1}>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Priority</InputLabel>
+                <Select value={priorityFilter} label="Priority" onChange={e => setPriorityFilter(e.target.value)}>
+                  <MenuItem value="all">All Priorities</MenuItem>
+                  <MenuItem value="critical">Critical</MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="low">Low</MenuItem>
+                </Select>
+              </FormControl>
+              <HelpTooltip
+                title={HELP_CONTENT.cases.priority.title}
+                description={HELP_CONTENT.cases.priority.description}
+              />
+            </Box>
+            <Box display="flex" alignItems="center" gap={1}>
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Status</InputLabel>
+                <Select value={statusFilter} label="Status" onChange={e => setStatusFilter(e.target.value)}>
+                  <MenuItem value="all">All Statuses</MenuItem>
+                  <MenuItem value="open">Open</MenuItem>
+                  <MenuItem value="in_progress">In Progress</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="resolved">Resolved</MenuItem>
+                  <MenuItem value="closed">Closed</MenuItem>
+                </Select>
+              </FormControl>
+              <HelpTooltip
+                title={HELP_CONTENT.cases.caseStatus.title}
+                description={HELP_CONTENT.cases.caseStatus.description}
+              />
+            </Box>
             <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
               {filtered.length} of {cases.length} cases
             </Typography>
@@ -207,16 +221,22 @@ const CasesPage: React.FC = () => {
           ))}
         </Grid>
       ) : filtered.length === 0 ? (
-        <Card sx={{ textAlign: 'center', p: 6 }}>
-          <CaseIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">No cases found</Typography>
-          <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
-            {cases.length === 0 ? 'Create your first incident case to get started.' : 'Try adjusting your filters.'}
-          </Typography>
-          {cases.length === 0 && (
-            <Button variant="contained" startIcon={<AddIcon />} onClick={handleOpenCreate}>Create First Case</Button>
-          )}
-        </Card>
+        <Box sx={{ py: 4 }}>
+          <EmptyState
+            icon={<CaseIcon />}
+            title={cases.length === 0 ? "No Cases Yet" : "No Cases Match Your Filters"}
+            description={
+              cases.length === 0
+                ? "Create your first incident investigation case to start managing security events and evidence."
+                : "Try adjusting your filters or search terms to find existing cases."
+            }
+            action={{
+              label: "Create New Case",
+              onClick: handleOpenCreate,
+              icon: <AddIcon />,
+            }}
+          />
+        </Box>
       ) : (
         <Grid container spacing={2}>
           {filtered.map(caseItem => {

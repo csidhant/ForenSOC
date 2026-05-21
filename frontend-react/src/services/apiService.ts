@@ -101,25 +101,82 @@ class ApiService {
     const skip = (page - 1) * pageSize;
     const response = await this.api.get('/cases', { params: { skip, limit: pageSize } });
     const data = response.data;
+    const mapPriority = (p: any) => {
+      // backend stores priority as integer; normalize to frontend string values
+      const mapping: Record<number | string, string> = {
+        0: 'low',
+        1: 'medium',
+        2: 'high',
+        3: 'critical',
+      };
+      if (p === null || p === undefined) return 'medium';
+      if (typeof p === 'number') return mapping[p] || String(p);
+      if (typeof p === 'string') return p;
+      // if backend ever returns an object like { name: 'high' }
+      if (typeof p === 'object' && (p as any).name) return (p as any).name;
+      return String(p);
+    };
+
+    const normalizeCase = (c: any) => ({
+      ...c,
+      priority: mapPriority(c.priority),
+      status: c.status ? String(c.status).toLowerCase() : c.status,
+    });
+
     if (Array.isArray(data)) {
-      return { items: data, total: data.length };
+      return { items: data.map(normalizeCase), total: data.length };
     }
-    return data;
+    if (data && Array.isArray(data.items)) {
+      return { ...data, items: data.items.map(normalizeCase) };
+    }
+    return normalizeCase(data);
   }
 
   async getCase(id: string): Promise<Case> {
     const response = await this.api.get(`/cases/${id}`);
-    return response.data;
+    const mapping: Record<number | string, string> = { 0: 'low', 1: 'medium', 2: 'high', 3: 'critical' };
+    const c = response.data;
+    if (c) {
+      const priority = c.priority;
+      if (priority === null || priority === undefined) c.priority = 'medium';
+      else if (typeof priority === 'number') c.priority = mapping[priority] || String(priority);
+      else if (typeof priority === 'object' && (priority as any).name) c.priority = (priority as any).name;
+      else c.priority = String(priority);
+      c.status = c.status ? String(c.status).toLowerCase() : c.status;
+    }
+    return c;
   }
 
   async createCase(data: Partial<Case>): Promise<Case> {
-    const response = await this.api.post('/cases', data);
-    return response.data;
+    // backend expects priority as integer — convert from frontend string
+    const priorityMap: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+    const payload = { ...data } as any;
+    if (payload.priority && typeof payload.priority === 'string') {
+      payload.priority = priorityMap[payload.priority] ?? payload.priority;
+    }
+    const response = await this.api.post('/cases', payload);
+    const created = response.data;
+    // normalize returned case
+    if (created) {
+      created.priority = (typeof created.priority === 'number') ? (Object.keys(priorityMap).find(k => priorityMap[k] === created.priority) || String(created.priority)) : String(created.priority);
+      created.status = created.status ? String(created.status).toLowerCase() : created.status;
+    }
+    return created;
   }
 
   async updateCase(id: string, data: Partial<Case>): Promise<Case> {
-    const response = await this.api.put(`/cases/${id}`, data);
-    return response.data;
+    const priorityMap: Record<string, number> = { low: 0, medium: 1, high: 2, critical: 3 };
+    const payload = { ...data } as any;
+    if (payload.priority && typeof payload.priority === 'string') {
+      payload.priority = priorityMap[payload.priority] ?? payload.priority;
+    }
+    const response = await this.api.put(`/cases/${id}`, payload);
+    const updated = response.data;
+    if (updated) {
+      updated.priority = (typeof updated.priority === 'number') ? (Object.keys(priorityMap).find(k => priorityMap[k] === updated.priority) || String(updated.priority)) : String(updated.priority);
+      updated.status = updated.status ? String(updated.status).toLowerCase() : updated.status;
+    }
+    return updated;
   }
 
   async deleteCase(id: string): Promise<void> {

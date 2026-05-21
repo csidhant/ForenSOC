@@ -29,6 +29,8 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useUiStore, useAuthStore } from '@utils/store';
+import { HelpTooltip } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 import { toast } from 'react-toastify';
 
 const SettingsPage: React.FC = () => {
@@ -58,6 +60,11 @@ const SettingsPage: React.FC = () => {
     toast.success('Password updated successfully');
     setPasswordForm({ current: '', newPass: '', confirm: '' });
   };
+
+  const roleLabel =
+    user?.role && typeof user.role === 'object'
+      ? (user.role as { name?: string }).name || '—'
+      : user?.role || '—';
 
   return (
     <Box>
@@ -96,7 +103,7 @@ const SettingsPage: React.FC = () => {
               </Typography>
               <Chip
                 icon={<CheckIcon />}
-                label={(typeof user?.role === 'object' ? user?.role?.name : user?.role) || 'Analyst'}
+                label={roleLabel}
                 color="primary"
                 size="small"
                 variant="outlined"
@@ -105,7 +112,7 @@ const SettingsPage: React.FC = () => {
               <List dense disablePadding>
                 {[
                   { icon: <PersonIcon fontSize="small" />, label: 'Username', value: user?.username || '—' },
-                  { icon: <KeyIcon fontSize="small" />, label: 'Role', value: (typeof user?.role === 'object' ? user?.role?.name : user?.role) || '—' },
+                  { icon: <KeyIcon fontSize="small" />, label: 'Role', value: roleLabel },
                 ].map((item) => (
                   <ListItem key={item.label} disablePadding sx={{ py: 0.5 }}>
                     <ListItemIcon sx={{ minWidth: 32 }}>{item.icon}</ListItemIcon>
@@ -135,7 +142,15 @@ const SettingsPage: React.FC = () => {
                     <DarkModeIcon />
                   </ListItemIcon>
                   <ListItemText
-                    primary="Dark Mode"
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span>Dark Mode</span>
+                        <HelpTooltip
+                          title={HELP_CONTENT.general.darkMode.title}
+                          description={HELP_CONTENT.general.darkMode.description}
+                        />
+                      </Box>
+                    }
                     secondary="Use dark theme across the platform"
                   />
                   <ListItemSecondaryAction>

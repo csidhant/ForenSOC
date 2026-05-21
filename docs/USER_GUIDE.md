@@ -1,247 +1,333 @@
-# ForenSOC — Analyst & Investigator User Guide
+# ForenSOC User Guide
 
-**Version**: 1.0.0 | **Audience**: Security Analysts, Digital Forensic Investigators, SOC Managers
-
----
-
-## Welcome to ForenSOC
-
-ForenSOC is an integrated platform designed to unify the workflows of security operations (monitoring and detection) with digital forensics and incident response (detailed, post-incident forensic deep-dives).
-
-This guide walks you through the day-to-day usage of ForenSOC: from monitoring real-time telemetry to reconstructing attack timelines and publishing forensic reports.
+> **For security analysts, investigators, and administrators using the ForenSOC platform.**
 
 ---
 
 ## Table of Contents
 
-1. [Dashboard & Threat Telemetry](#1-dashboard--threat-telemetry)
-2. [Real-time Alerts & Sigma Triage](#2-real-time-alerts--sigma-triage)
-3. [Case Management & Kanban Workflow](#3-case-management--kanban-workflow)
-4. [Evidence Vault & Custody Protocols](#4-evidence-vault--custody-protocols)
-5. [Digital Forensics Modules](#5-digital-forensics-modules)
-   - [5.1 Network Packet Analysis (PCAP)](#51-network-packet-analysis-pcap)
-   - [5.2 Memory Forensics (Volatility 3)](#52-memory-forensics-volatility-3)
-   - [5.3 Malware Scanning (YARA)](#53-malware-scanning-yara)
-6. [Timeline Reconstruction & MITRE ATT&CK](#6-timeline-reconstruction--mitre-attck)
-7. [Generating Forensic Reports](#7-generating-forensic-reports)
+- [Logging In](#logging-in)
+- [Dashboard Overview](#dashboard-overview)
+- [Working with Alerts](#working-with-alerts)
+- [Managing Cases](#managing-cases)
+- [Evidence Vault](#evidence-vault)
+- [Log Explorer](#log-explorer)
+- [Detection Rules](#detection-rules)
+- [Digital Forensics](#digital-forensics)
+- [MITRE ATT&CK](#mitre-attck)
+- [Reports & Audit](#reports--audit)
+- [Public Threat Search](#public-threat-search)
+- [Settings](#settings)
+- [Role Permissions](#role-permissions)
 
 ---
 
-## 1. Dashboard & Threat Telemetry
+## Logging In
 
-The Dashboard is your primary mission control panel. It aggregates all system state metrics and real-time security indicators.
+Navigate to the ForenSOC URL (local: `http://localhost:3000`, or your deployed URL).
 
-```
-+-------------------------------------------------------------------------+
-| [System Operational]                                 (Dark Mode Toggle) |
-+-------------------------------------------------------------------------+
-| (Total Alerts: 142)  (Active Cases: 8)  (Evidence Vault: 32) (Intel: OK)|
-+-------------------------------------------------------------------------+
-|                                                                         |
-|  [ Global Threat Map ]                 [ Alerts Over Time ]            |
-|  Pins attacks dynamically using        Vibrant Area chart showing       |
-|  Geo-IP mapping.                       triage trends.                   |
-|                                                                         |
-+-------------------------------------------------------------------------+
-|  [ Live Alert Stream ]                                                  |
-|  Real-time toast notifications and raw logs popping via WebSocket feed.  |
-+-------------------------------------------------------------------------+
-```
+### Available Login Options
 
-### Key Submodules
-*   **System Status Indicator**: Displays real-time API connectivity and backend worker health in the top bar.
-*   **Geo-IP Threat Map**: Pins the source location of incoming malicious alerts. Green pins designate benign activity, amber represents medium severity, and pulsing red indicators point to ongoing critical attacks.
-*   **Live Alert Feed**: Displays incoming threats as they happen. Powered by WebSockets, it eliminates browser refreshes.
+1.  **Quick-Start Demo Account (Pre-seeded):**
+    For immediate local development or classroom evaluation, use the built-in system administrator credentials:
+    *   **Username:** `admin`
+    *   **Password:** `admin` (or the production override set in your `.env` settings)
+    *   *Note: These credentials are also displayed directly on the login panel chip for rapid dev access.*
+
+2.  **User Self-Registration:**
+    If you do not have an account, click **Register now** on the login page or navigate to `/register` to create a personalized profile (Username, Email, and Password) that is saved immediately in the secure database.
+
+3.  **Role-Based Access Control (RBAC):**
+    Your login maps to a specific workspace and role that restricts the available actions and views:
+    *   **Admin (`admin`)**: Complete privileges over rule creation, users, and audit trails.
+    *   **Analyst (`analyst`)**: Alerts monitoring, threat mapping, log queries.
+    *   **Investigator (`investigator`)**: Memory/Zeek forensics, evidence custody, case timelines, PDF reporting.
+    *   **Viewer (`viewer`)**: Read-only observation and metrics monitoring.
+
+> ⚠️ **Security Warning:** Change default passwords immediately after your first login via **Settings → Account**.
 
 ---
 
-## 2. Real-time Alerts & Sigma Triage
+---
 
-All security events flow into the **Alerts Page**. This is where initial log triage occurs.
+## Dashboard Overview
 
-### Triaging Incoming Alerts
-1.  **Filter and Search**: Use the real-time search bar to isolate alerts by Title, Description, or Log Source. You can filter by **Severity** (Critical, High, Medium, Low, Info) or **Status** (Unreviewed, In Progress, Resolved, False Positive).
-2.  **Inspect Alert Details**: Click **View Detail** on any alert to open the diagnostic window. It exposes:
-    - Target hostnames and IP addresses
-    - Raw normalized JSON event metadata
-    - The matching Sigma rule YAML signature that triggered the detection
-3.  **Triage Actions**:
-    - **One-Click Resolve**: If a threat has been safely mitigated, click **Resolve**.
-    - **Convert to Case**: If an alert warrants a comprehensive team investigation, select **Convert to Case**. This creates a formal incident entry in the Cases panel and links the alert dynamically.
+The Dashboard is your mission control. It shows:
+
+| Widget | What it tells you |
+|--------|-------------------|
+| **Total Alerts** | Count of open security alerts |
+| **Open Cases** | Active incident investigations |
+| **Critical Alerts** | High-severity detections needing immediate attention |
+| **Evidence Items** | Files stored in the forensic vault |
+| **Alert Trend Chart** | 7-day bar chart of alert volume |
+| **Severity Distribution** | Pie chart of alert severity breakdown |
+| **Live Alert Feed** | Real-time WebSocket-pushed latest alerts |
+| **Global Threat Map** | Geographic origin of network-based threats |
+
+The dashboard auto-refreshes via WebSocket — no manual reload needed.
 
 ---
 
-## 3. Case Management & Kanban Workflow
+## Working with Alerts
 
-Once an alert is escalated, it enters the **Cases Page**. ForenSOC utilizes a highly visual Kanban card grid to organize active investigations.
+**Navigate to: Alerts** (sidebar)
 
-```
-  ┌─────────────────────────┐     ┌─────────────────────────┐     ┌─────────────────────────┐
-  │         OPEN            │     │       IN PROGRESS       │     │        RESOLVED         │
-  ├─────────────────────────┤     ├─────────────────────────┤     ├─────────────────────────┤
-  │ [CASE-204] SSH Brute    │ ──> │ [CASE-202] Memory Dump  │ ──> │ [CASE-201] Phishing Tri │
-  │ Priority: Critical      │     │ Priority: High          │     │ Priority: Medium        │
-  │ Assigned: Investigator  │     │ Assigned: Analyst Bob   │     │ Assigned: Admin         │
-  └─────────────────────────┘     └─────────────────────────┘     └─────────────────────────┘
-```
+### Viewing Alerts
 
-### Managing Incidents
-*   **Visual Status Indicators**: Cards are color-coded by priority (Red border for Critical, Amber for High, Blue for Medium, Grey for Low) with status tags.
-*   **Create Case**: Click **Create New Case** to spin up an investigation manually. Provide a Title, Description, Status, and assign a priority level.
-*   **Case Details**: Click **Manage** on any case card to open the case command center, which houses four operational hubs:
-    1.  **Case Timeline**: Second-by-second aggregated forensic log.
-    2.  **Linked Alerts**: Every security event associated with the incident.
-    3.  **Evidence Vault**: Crypographically sealed files uploaded by investigators.
-    4.  **Case Notes**: Multi-analyst collaborative log for shift handover documentation.
+Alerts are color-coded by severity:
+- 🔴 **Critical** — Immediate action required
+- 🟠 **High** — Investigate within the hour
+- 🟡 **Medium** — Investigate within the day
+- 🔵 **Low** — Informational, review when time allows
 
----
+### Alert Actions
 
-## 4. Evidence Vault & Custody Protocols
+| Action | How |
+|--------|-----|
+| View details | Click on any alert row |
+| Resolve alert | Click **Resolve** button (turns alert to closed state) |
+| Mark false positive | Click **False Positive** — removes from active queue |
+| Link to case | Click **Link to Case** — associates alert with an investigation |
+| Assign to analyst | Click **Assign** — pick from user list |
 
-The **Evidence Vault** is a secure storage system for volatile files, network captures, memory images, and suspicious binaries.
+### Filters
 
-```
-       [ Upload Artifact ] ──> Calculates Cryptographic Signature (SHA-256)
-                                               │
-                                               ▼
-                              Creates Signed Database Record
-                                               │
-                                               ▼
-                        Integrity Verified status is set to "Green"
-```
+Use the top filter bar to filter by:
+- **Severity** (Critical / High / Medium / Low)
+- **Status** (Open / Closed / False Positive)
+- **Free text search** (alert name, source IP)
 
-### Ingestion Protocol
-1.  Navigate to the case, and open the **Evidence Vault** panel.
-2.  Click **Upload Evidence**.
-3.  Select file type (**PCAP Capture**, **Memory Dump**, **Disk Image**, **User File**, **Browser History SQLite**).
-4.  Specify an accurate **Description** and **Collected By** name.
-5.  Click **Submit**. The file is encrypted, hashed on ingestion, and locked in the vault.
+### Real-time Notifications
 
-### Integrity & Custody
-*   **Verify Integrity**: Click **Verify Hash** to run an automated check. The platform hashes the file on disk and verifies it against the signed hash saved on upload.
-*   **Chain of Custody**: Every download, modification, or forensically executed script updates the immutable Chain of Custody list with date, actor, and verification hashes.
+When a new critical alert fires, you will see:
+1. A **red toast notification** in the top-right corner
+2. A **Slack message** if `SLACK_WEBHOOK_URL` is configured
 
 ---
 
-## 5. Digital Forensics Modules
+## Managing Cases
 
-Once artifacts are placed in the vault, you can execute deep forensic workflows.
+**Navigate to: Cases** (sidebar)
 
-### 5.1 Network Packet Analysis (PCAP)
+Cases are incident investigations that group related alerts, evidence, and timelines.
 
-ForenSOC parses network packet captures to discover exfiltration and beaconing.
+### Creating a Case
 
-```
-  PCAP Upload ──> Ingested ──> Zeek Extraction ──> Logs Created (conn.log, dns.log, ssl.log)
-                                       │
-                                       ▼
-                             Suricata Rule Evaluation
-                                       │
-                                       ▼
-                       Anomaly Indicators Pinned to Case
-```
+1. Click **+ New Case**
+2. Fill in: Title, Description, Priority (Low / Medium / High / Critical), Status
+3. Click **Create** — the case appears in the card grid
 
-*   **Extraction**: The system runs Zeek on the capture to extract structured tables (Connections, DNS requests, HTTP sessions, SSL certificates).
-*   **IDS Scans**: Suricata parses the PCAP against rules to locate malicious packet footprints.
-*   **Triage**: Check the **Network Analysis** dashboard to discover:
-    - Top conversation source/destination IPs
-    - High-frequency DNS queries (flags DNS tunneling)
-    - Suspicious browser User-Agents
+### Case Priority Colors
 
----
+| Priority | Card Color |
+|----------|------------|
+| Critical | Red border |
+| High | Orange border |
+| Medium | Yellow border |
+| Low | Blue border |
 
-### 5.2 Memory Forensics (Volatility 3)
+### Inside a Case
 
-Investigate high-severity incidents like rootkits or active malware processes using built-in Volatility 3 connectors.
+Click any case card to open the **Case Detail** view:
 
-```
-  Memory Dump ──> Selected ──> Select Plugin ──> Execution (Processes, Connections, Registry)
-                                                        │
-                                                        ▼
-                                         Flags Suspicious Indicators
-                                         (Hidden PIDs, Malicious DLLs)
-```
-
-#### Supported Volatility Plugins
--   `windows.pslist`: Lists all running processes (flags parent-child process anomalies).
--   `windows.pstree`: Displays running processes in a hierarchical tree layout.
--   `windows.netscan`: Extracts active network connections, sockets, and listening ports.
--   `windows.malfind`: Identifies injected code blocks and suspicious memory segments.
-
-#### Executing Memory Analysis
-1. Select the Memory Dump artifact inside the Evidence Vault.
-2. Select your target Volatility plugin from the dropdown.
-3. Click **Execute Plugin**. The job runs in the background.
-4. Review the completed job to inspect flagged hidden PIDs, socket maps, or suspicious DLLs.
+| Tab | Contents |
+|-----|----------|
+| **Overview** | Title, description, assignees, status |
+| **Alerts** | Linked alerts for this incident |
+| **Evidence** | Files uploaded to this case |
+| **Timeline** | Chronological event reconstruction |
+| **MITRE** | ATT&CK tactic/technique mapping |
+| **Reports** | Generated PDF forensic reports |
 
 ---
 
-### 5.3 Malware Scanning (YARA)
+## Evidence Vault
 
-Scan file uploads, script drops, or running binaries for malicious code using advanced YARA rules.
+**Navigate to: Evidence Vault** (sidebar)
 
-#### Uploading Custom Signatures
-1. Navigate to **System Settings → YARA Configurations**.
-2. Click **Add YARA Rule**.
-3. Paste a standard YARA signature:
-   ```yara
-   rule Suspicious_ReverseShell {
-       strings:
-           $shell_cmd = "cmd.exe /c powershell -nop -w hidden -c"
-           $socket_conn = "System.Net.Sockets.TCPClient"
-       condition:
-           any of them
-   }
-   ```
-4. Click **Save**.
+Securely store and analyze forensic evidence with full chain-of-custody tracking.
 
-#### Running a Malware Scan
-1. Select the target file inside the Case Evidence Vault.
-2. Select **Run YARA Scan**.
-3. Select your rule set (Default, Custom, or All).
-4. Click **Scan**. Any matching text strings, hex blocks, or signature rules will be highlighted.
+### Uploading Evidence
 
----
+1. Click **Upload Evidence**
+2. Select a file (supports: `.pcap`, `.mem`, `.bin`, `.log`, `.zip`, `.exe`, and more)
+3. Set the Evidence Type: Memory Dump / PCAP / Binary / Log File / Other
+4. Link to a Case (optional)
+5. Click **Upload** — the system auto-calculates SHA-256 and MD5 hashes
 
-## 6. Timeline Reconstruction & MITRE ATT&CK
+### Verifying Integrity
 
-Manual correlation during high-pressure incidents is error-prone. ForenSOC automates event correlation.
+Click **Verify** on any evidence item to re-hash the file and confirm it matches the stored hash. This is the chain-of-custody check.
 
-```
-  [ Raw Logs ] ───┐
-  [ Alerts ] ─────┼──> [ Ingestion Engine ] ──> Chronological Timeline (200 OK)
-  [ Evidence ] ───┘
-```
+### Analysis Actions
 
-### Chronicle Visualization
-*   ForenSOC aggregates raw logs, generated alerts, evidence uploads, and investigator notes into a unified second-by-second timeline.
-*   Filter by event source or severity to reconstruct the precise path of the threat (e.g., initial entry via phish → credential theft → lateral movement → exfiltration).
-
-### MITRE ATT&CK Matrix Mapping
-*   Every alert generated by the Sigma engine automatically maps to the **MITRE ATT&CK** matrix.
-*   Open the **MITRE Visualizer** page inside your active Case to see a heat-mapped grid of tactics (Initial Access, Execution, Persistence, Command & Control). This grid highlights the attacker's operational patterns and maps out potential gaps in your network's defense system.
+| Action | Tool Used |
+|--------|-----------|
+| YARA Scan | Scans binary against built-in malware rules |
+| Memory Analysis | Runs Volatility 3 on memory dumps |
+| PCAP Analysis | Runs Zeek on network captures |
+| File Analysis | Extracts metadata and file type info |
 
 ---
 
-## 7. Generating Forensic Reports
+## Log Explorer
 
-When an investigation closes, you can generate an executive-ready report in one click.
+**Navigate to: Log Explorer** (sidebar)
 
-```
-  Case Closed ──> Click Generate ──> ReportLab PDF Assembly ──> Download Signed PDF
-```
+Browse raw and normalized security events ingested into ForenSOC.
 
-### Generating a PDF Report
-1.  Navigate to your active Case.
-2.  Click **Generate PDF Report**.
-3.  Customize your report selections:
-    - [x] Executive Summary (includes case metadata and recommendations)
-    - [x] Incident Timeline
-    - [x] Evidence Vault List & Chain of Custody hashes
-    - [x] MITRE ATT&CK mapping overview
-4.  Click **Compile Report**.
-5.  A professionally styled, cryptographically signed PDF report will generate instantly. Download the PDF directly for delivery to executive leadership, legal counsel, or external law enforcement.
+### Tabs
+
+- **Raw Logs** — Original log lines as ingested
+- **Normalized Events** — Parsed, structured events ready for detection
+
+### Ingesting Logs Manually
+
+1. Click **Ingest Log**
+2. Paste or type a raw log line
+3. Select the log source type
+4. Click **Submit** — the system parses and normalizes the event, then runs detection rules against it
+
+### Auto-Ingest (Zero-Click)
+
+Drop any `.log` file into the `backend/ingest_drop/` folder. The automation watcher picks it up within seconds and processes it automatically.
 
 ---
 
-*ForenSOC User Guide — Empowering analysts to protect, detect, and resolve threats.*
+## Detection Rules
+
+**Navigate to: Detection Rules** (sidebar)
+
+Manage the rules that generate alerts from log events.
+
+### Built-in Rules
+
+| Rule | Severity | Description |
+|------|----------|-------------|
+| SSH Brute Force | High | 5+ failed SSH logins from same IP within 5 minutes |
+| Multiple Failed Logins | Medium | 3+ auth failures within 10 minutes |
+| Suspicious Web Request | Medium | HTTP requests to admin paths (`/wp-admin`, `/phpmyadmin`) |
+
+### Adding a Custom Rule
+
+**Option 1 — GUI Form:**
+1. Click **+ New Rule**
+2. Fill in name, severity, event type, threshold, time window
+3. Click **Save**
+
+**Option 2 — Sigma YAML:**
+1. Click **Upload Sigma Rule**
+2. Paste your Sigma YAML
+3. Click **Parse & Create** — the engine converts it to a ForenSOC rule
+
+### Enabling / Disabling Rules
+
+Toggle the switch next to any rule to enable or disable it without deleting it.
+
+### Running a Manual Scan
+
+Click **Run Detection Scan** to apply all active rules against the last 24 hours of normalized events. Matches generate new alerts immediately.
+
+---
+
+## Digital Forensics
+
+**Navigate to: Forensics** (sidebar)
+
+Run advanced analysis against uploaded evidence files.
+
+| Tool | Input | Output |
+|------|-------|--------|
+| **YARA** | Binary / EXE file | Malware rule matches with confidence scores |
+| **Volatility 3** | Windows memory dump | Running processes, network connections, injected code |
+| **Zeek** | PCAP network capture | HTTP sessions, DNS queries, file transfers, connection logs |
+| **Suricata EVE** | Suricata JSON output | IDS alerts parsed into ForenSOC events |
+
+> **Note:** Volatility and Zeek require the tools to be installed on the server. Cloud deployments (Render free tier) will return a graceful "tool not available" message. YARA works on all deployments.
+
+---
+
+## MITRE ATT&CK
+
+**Navigate to: MITRE** (sidebar)
+
+Visualize how detected threats map to the MITRE ATT&CK framework.
+
+- **Global Heatmap** — Color-coded matrix showing which tactics and techniques have been observed across all cases
+- **Case Summary** — For a specific case, which ATT&CK techniques were triggered and by which alerts
+
+Click **Sync Mappings** on a case to automatically populate ATT&CK technique tags from linked alerts.
+
+---
+
+## Reports & Audit
+
+### Reports
+
+**Navigate to: Reports** (sidebar)
+
+Generate a professional PDF forensic report for any case:
+
+1. Open a Case → **Reports** tab
+2. Click **Generate PDF Report**
+3. The report includes: executive summary, timeline, linked alerts, evidence manifest, MITRE mappings
+4. Click **Download** to save
+
+### Audit Logs
+
+**Navigate to: Audit Logs** (sidebar)
+
+Immutable log of every write operation in the system:
+- Who performed the action
+- What was changed
+- Timestamp
+
+This log cannot be edited or deleted — it is the system's chain-of-custody at the platform level.
+
+---
+
+## Public Threat Search
+
+**Navigate to: `/public` (no login required)**
+
+Anyone can search the ForenSOC threat database without an account:
+
+1. **Search** — Enter an IP address, domain name, or SHA-256/MD5 hash
+2. **File Scan** — Upload a file for YARA analysis
+
+This is similar to VirusTotal — useful for quick lookups by anyone in your organization who doesn't have a ForenSOC account.
+
+---
+
+## Settings
+
+**Navigate to: Settings** (sidebar → bottom)
+
+| Section | Options |
+|---------|---------|
+| **Appearance** | Toggle Dark / Light mode |
+| **Notifications** | Enable/disable toast alerts, sound, Slack |
+| **Account** | Change display name, email, password |
+| **System Info** | App version, connected services status |
+
+---
+
+## Role Permissions
+
+| Permission | Admin | Analyst | Investigator | Viewer |
+|------------|-------|---------|--------------|--------|
+| View dashboard | ✅ | ✅ | ✅ | ✅ |
+| View alerts & cases | ✅ | ✅ | ✅ | ✅ |
+| Create / edit cases | ✅ | ✅ | ✅ | ❌ |
+| Upload evidence | ✅ | ✅ | ✅ | ❌ |
+| Run forensics | ✅ | ✅ | ✅ | ❌ |
+| Create detection rules | ✅ | ✅ | ❌ | ❌ |
+| Manage users | ✅ | ❌ | ❌ | ❌ |
+| View audit logs | ✅ | ❌ | ❌ | ❌ |
+| Generate reports | ✅ | ✅ | ✅ | ❌ |
+
+---
+
+*For deployment instructions, see [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).  
+For API reference, see [ARCHITECTURE_AND_API.md](ARCHITECTURE_AND_API.md).*

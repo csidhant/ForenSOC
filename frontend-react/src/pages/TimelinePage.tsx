@@ -20,6 +20,8 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Timeline as TimelineIcon } from '@mui/icons-material';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 import { Case, TimelineEventRow } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
@@ -81,20 +83,26 @@ const TimelinePage: React.FC = () => {
       {msg && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setMsg('')}>{msg}</Alert>}
       <Card sx={{ mb: 2 }}>
         <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-          <FormControl sx={{ minWidth: 280 }} size="small">
-            <InputLabel>Case</InputLabel>
-            <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
-              <MenuItem value="">Select case</MenuItem>
-              {cases.map((c) => (
-                <MenuItem key={c.id} value={String(c.id)}>
-                  {(c.case_number || c.id) + ' — ' + c.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Button variant="outlined" onClick={load} disabled={!caseId || loading}>
-            Refresh
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <FormControl sx={{ minWidth: 280 }} size="small">
+              <InputLabel>Case</InputLabel>
+              <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
+                <MenuItem value="">Select case</MenuItem>
+                {cases.map((c) => (
+                  <MenuItem key={c.id} value={String(c.id)}>
+                    {(c.case_number || c.id) + ' — ' + c.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title={HELP_CONTENT.timeline.eventTime.title}
+              description={HELP_CONTENT.timeline.eventTime.description}
+            />
+            <Button variant="outlined" onClick={load} disabled={!caseId || loading}>
+              Refresh
+            </Button>
+          </Box>
           <Button variant="contained" color="secondary" onClick={rebuild} disabled={!caseId || loading}>
             Rebuild from alerts / logs / evidence
           </Button>
@@ -104,6 +112,19 @@ const TimelinePage: React.FC = () => {
         <CardContent>
           {loading ? (
             <Box display="flex" justifyContent="center" py={4}><CircularProgress /></Box>
+          ) : rows.length === 0 ? (
+            <Box sx={{ py: 4 }}>
+              <EmptyState
+                icon={<TimelineIcon />}
+                title={caseId ? 'No timeline events yet' : 'Select a case to view the timeline'}
+                description={
+                  caseId
+                    ? 'Run the timeline rebuild or add related alerts, logs, and evidence for this case.'
+                    : 'Pick a case above to build a correlated event timeline for investigation.'
+                }
+                action={caseId ? { label: 'Rebuild Timeline', onClick: rebuild } : undefined}
+              />
+            </Box>
           ) : (
             <TableContainer component={Paper} variant="outlined">
               <Table size="small">
@@ -117,25 +138,15 @@ const TimelinePage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5}>
-                        <Typography color="text.secondary" align="center" py={2}>
-                          {caseId ? 'No timeline rows. Run Rebuild after adding alerts or logs.' : 'Select a case.'}
-                        </Typography>
-                      </TableCell>
+                  {rows.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>{formatDateTime(r.event_time)}</TableCell>
+                      <TableCell>{r.source}</TableCell>
+                      <TableCell>{r.event_type || '—'}</TableCell>
+                      <TableCell>{r.severity || '—'}</TableCell>
+                      <TableCell sx={{ maxWidth: 480 }}>{r.description}</TableCell>
                     </TableRow>
-                  ) : (
-                    rows.map((r) => (
-                      <TableRow key={r.id}>
-                        <TableCell>{formatDateTime(r.event_time)}</TableCell>
-                        <TableCell>{r.source}</TableCell>
-                        <TableCell>{r.event_type || '—'}</TableCell>
-                        <TableCell>{r.severity || '—'}</TableCell>
-                        <TableCell sx={{ maxWidth: 480 }}>{r.description}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </TableContainer>

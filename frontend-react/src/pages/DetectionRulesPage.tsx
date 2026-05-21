@@ -36,6 +36,9 @@ import {
 } from '@mui/icons-material';
 import { DetectionRule, AlertSeverity } from '../types';
 import { apiService } from '@services/apiService';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
+import { Shield as ShieldIcon } from '@mui/icons-material';
 
 
 const DetectionRulesPage: React.FC = () => {
@@ -248,6 +251,16 @@ const DetectionRulesPage: React.FC = () => {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+      <Card sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 2 }}>
+          <Typography variant="body2">Detection rules use Sigma format, Suricata rules, or custom patterns to identify threats.</Typography>
+          <HelpTooltip
+            title={HELP_CONTENT.detection.sigmaRules.title}
+            description={HELP_CONTENT.detection.sigmaRules.description}
+          />
+        </Box>
+      </Card>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -307,9 +320,18 @@ const DetectionRulesPage: React.FC = () => {
       </TableContainer>
 
       {rules.length === 0 && (
-        <Card sx={{ mt: 3, textAlign: 'center', p: 3 }}>
-          <Typography color="textSecondary">No detection rules found. Create one to get started.</Typography>
-        </Card>
+        <Box sx={{ mt: 3 }}>
+          <EmptyState
+            icon={<ShieldIcon />}
+            title="No Detection Rules"
+            description="Detection rules identify threats by pattern matching on log events. Create your first rule to start detecting security events."
+            action={{
+              label: "Create Rule",
+              onClick: () => handleOpenDialog(),
+              icon: <AddIcon />,
+            }}
+          />
+        </Box>
       )}
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>

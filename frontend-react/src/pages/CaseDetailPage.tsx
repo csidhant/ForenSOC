@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link as RouterLink } from 'react-router-dom';
+import { useParams, Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -19,7 +19,10 @@ import {
   Chip,
   Button,
 } from '@mui/material';
+import { FolderOpen as FolderOpenIcon } from '@mui/icons-material';
 import { Case, EvidenceItem, TimelineEventRow, CaseReportRecord } from '../types';
+import { HelpTooltip, EmptyState, BreadcrumbsNav } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
 
@@ -36,6 +39,7 @@ const CaseDetailPage: React.FC = () => {
   const [timelineLoading, setTimelineLoading] = useState(false);
   const [reports, setReports] = useState<CaseReportRecord[]>([]);
   const [reportsLoading, setReportsLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadCase = async () => {
@@ -149,9 +153,16 @@ const CaseDetailPage: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
-        {caseData.title}
-      </Typography>
+      <BreadcrumbsNav items={[{ label: 'Cases', path: '/cases' }, { label: `Case Details: ${caseData.case_number || caseData.id}` }]} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          {caseData.title}
+        </Typography>
+        <HelpTooltip
+          title={HELP_CONTENT.cases.timeline.title}
+          description={HELP_CONTENT.cases.timeline.description}
+        />
+      </Box>
 
       {actionError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setActionError('')}>
@@ -212,9 +223,14 @@ const CaseDetailPage: React.FC = () => {
                   <CircularProgress size={28} />
                 </Box>
               ) : evidence.length === 0 ? (
-                <Typography color="text.secondary">
-                  No evidence uploaded for this case yet. Use the evidence vault or Forensics page.
-                </Typography>
+                <Box sx={{ py: 4 }}>
+                  <EmptyState
+                    icon={<FolderOpenIcon />}
+                    title="No evidence uploaded"
+                    description="Upload evidence files through the Evidence Vault or Forensics page to attach artifacts to this case."
+                    action={{ label: 'Open evidence vault', onClick: () => navigate('/evidence') }}
+                  />
+                </Box>
               ) : (
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
@@ -271,6 +287,15 @@ const CaseDetailPage: React.FC = () => {
               </Box>
               {timelineLoading ? (
                 <Box display="flex" justifyContent="center" py={3}><CircularProgress size={28} /></Box>
+              ) : timelineRows.length === 0 ? (
+                <Box sx={{ py: 4 }}>
+                  <EmptyState
+                    icon={<FolderOpenIcon />}
+                    title="No timeline rows"
+                    description="Run the rebuild option or visit the full Timeline page to correlate events for this case."
+                    action={{ label: 'Rebuild timeline', onClick: rebuildTimeline }}
+                  />
+                </Box>
               ) : (
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
@@ -282,21 +307,13 @@ const CaseDetailPage: React.FC = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {timelineRows.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={3}>
-                            <Typography color="text.secondary">No rows — run Rebuild or use Timeline page.</Typography>
-                          </TableCell>
+                      {timelineRows.map((r) => (
+                        <TableRow key={r.id}>
+                          <TableCell>{formatDateTime(r.event_time)}</TableCell>
+                          <TableCell>{r.source}</TableCell>
+                          <TableCell sx={{ maxWidth: 400 }}>{r.description}</TableCell>
                         </TableRow>
-                      ) : (
-                        timelineRows.map((r) => (
-                          <TableRow key={r.id}>
-                            <TableCell>{formatDateTime(r.event_time)}</TableCell>
-                            <TableCell>{r.source}</TableCell>
-                            <TableCell sx={{ maxWidth: 400 }}>{r.description}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
+                      ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -330,7 +347,14 @@ const CaseDetailPage: React.FC = () => {
                       {reports.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4}>
-                            <Typography color="text.secondary">No PDFs yet — generate one above.</Typography>
+                            <Box sx={{ py: 4 }}>
+                              <EmptyState
+                                icon={<FolderOpenIcon />}
+                                title="No PDF reports yet"
+                                description="Generate a PDF summary for this case to keep a shareable investigation record."
+                                action={{ label: 'Generate PDF', onClick: quickPdf }}
+                              />
+                            </Box>
                           </TableCell>
                         </TableRow>
                       ) : (

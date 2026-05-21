@@ -1,0 +1,39 @@
+# ==============================================================================
+# docker-compose.prod.yml — Overlay for production hardening
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ==============================================================================
+
+version: '3.8'
+
+services:
+
+  backend:
+    # No reload in production — use stable multi-worker gunicorn-style
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    environment:
+      DEBUG: "false"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+
+  nginx:
+    # In production, close port 3000 — all traffic through nginx on port 80
+    # Optionally add SSL termination here via certbot / Let's Encrypt volumes
+    ports:
+      - "80:80"

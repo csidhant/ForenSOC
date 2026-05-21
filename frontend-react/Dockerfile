@@ -1,37 +1,34 @@
-# Multi-stage build
-FROM node:18-alpine AS builder
+# ============================================================
+# Stage 1 — Build the Vite/React application
+# ============================================================
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Install dependencies first (layer caching)
+COPY package.json package-lock.json ./
+RUN npm ci --frozen-lockfile
 
-# Install dependencies
-RUN npm ci
-
-# Copy source code
+# Copy source and build
 COPY . .
 
-# Build application
+# Accept backend URL at build time (can be overridden per deployment)
+ARG VITE_API_BASE_URL=/api
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+
 RUN npm run build
 
-# Production stage
-FROM node:18-alpine
+# ============================================================
+# Stage 2 — Serve with nginx
+# ============================================================
+FROM nginx:1.25-alpine
 
-WORKDIR /app
+# Copy built assets from builder stage
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Install serve to run the app
-RUN npm install -g serve
+# Copy nginx SPA config (handles React Router history-mode routes)
+COPY nginx-spa.conf /etc/nginx/conf.d/default.conf
 
-# Copy built app from builder
-COPY --from=builder /app/dist ./dist
+EXPOSE 80
 
-# Expose port
-EXPOSE 3000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:3000 || exit 1
-
-# Start application
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]

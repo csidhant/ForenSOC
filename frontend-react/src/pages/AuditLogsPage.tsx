@@ -16,6 +16,9 @@ import {
   Alert,
   TablePagination,
 } from '@mui/material';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
+import { History as HistoryIcon } from '@mui/icons-material';
 import { apiService } from '@services/apiService';
 import dayjs from 'dayjs';
 
@@ -62,9 +65,15 @@ const AuditLogsPage: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 600 }}>
-        System Audit Logs
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+        <Typography variant="h4" sx={{ fontWeight: 600 }}>
+          System Audit Logs
+        </Typography>
+        <HelpTooltip
+          title={HELP_CONTENT.audit.action.title}
+          description={HELP_CONTENT.audit.action.description}
+        />
+      </Box>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
@@ -109,8 +118,14 @@ const AuditLogsPage: React.FC = () => {
                 ))}
                 {logs.length === 0 && !loading && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
-                      No audit logs found.
+                    <TableCell colSpan={6}>
+                      <Box sx={{ py: 4 }}>
+                        <EmptyState
+                          icon={<HistoryIcon />}
+                          title="No audit logs found"
+                          description="Audit entries appear after system actions like login, case updates, evidence uploads, and report generation."
+                        />
+                      </Box>
                     </TableCell>
                   </TableRow>
                 )}

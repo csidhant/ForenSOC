@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==7.5.3
+httpx==0.24.1
+geocoder==1.38.1
+python-magic-bin==0.4.14 ; platform_system == "Windows"
+python-magic==0.4.27 ; platform_system != "Windows"

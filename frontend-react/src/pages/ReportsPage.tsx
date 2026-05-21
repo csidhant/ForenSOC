@@ -24,6 +24,8 @@ import { PictureAsPdf as PdfIcon } from '@mui/icons-material';
 import { Case, CaseReportRecord } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDateTime } from '@utils/helpers';
+import { HelpTooltip, EmptyState } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 
 const ReportsPage: React.FC = () => {
   const [cases, setCases] = useState<Case[]>([]);
@@ -89,17 +91,23 @@ const ReportsPage: React.FC = () => {
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
       <Card sx={{ mb: 2 }}>
         <CardContent sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <FormControl sx={{ minWidth: 280 }} size="small">
-            <InputLabel>Case</InputLabel>
-            <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
-              <MenuItem value="">Select case</MenuItem>
-              {cases.map((c) => (
-                <MenuItem key={c.id} value={String(c.id)}>
-                  {(c.case_number || c.id) + ' — ' + c.title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <FormControl sx={{ minWidth: 280 }} size="small">
+              <InputLabel>Case</InputLabel>
+              <Select value={caseId} label="Case" onChange={(e) => setCaseId(e.target.value as string)}>
+                <MenuItem value="">Select case</MenuItem>
+                {cases.map((c) => (
+                  <MenuItem key={c.id} value={String(c.id)}>
+                    {(c.case_number || c.id) + ' — ' + c.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <HelpTooltip
+              title={HELP_CONTENT.reports.reportType.title}
+              description={HELP_CONTENT.reports.reportType.description}
+            />
+          </Box>
           <TextField
             size="small"
             label="Report title (optional)"
@@ -135,9 +143,18 @@ const ReportsPage: React.FC = () => {
                   {rows.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5}>
-                        <Typography color="text.secondary" align="center" py={2}>
-                          {caseId ? 'No reports yet for this case.' : 'Select a case.'}
-                        </Typography>
+                        <Box sx={{ py: 4 }}>
+                          <EmptyState
+                            icon={<PdfIcon />}
+                            title={caseId ? 'No reports yet' : 'Select a case to get started'}
+                            description={
+                              caseId
+                                ? 'Generate a PDF summary for this case and it will appear here.'
+                                : 'Choose a case above to load available reports.'
+                            }
+                            action={caseId ? { label: 'Generate PDF', onClick: generate } : undefined}
+                          />
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ) : (

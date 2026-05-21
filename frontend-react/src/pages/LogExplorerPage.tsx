@@ -39,6 +39,8 @@ import {
 import { RawEvent, NormalizedEvent } from '../types';
 import { apiService } from '@services/apiService';
 import { formatDate } from '@utils/helpers';
+import { HelpTooltip, EmptyState, StudentGuidePanel } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -174,6 +176,72 @@ const LogExplorerPage: React.FC = () => {
         Search ingested logs, review normalized events, and investigate suspicious activity.
       </Typography>
 
+      {/* Student Guide Panel */}
+      <StudentGuidePanel
+        pageTitle="Log Explorer"
+        pageExplained={
+          'The Log Explorer is where all the raw security logs from your systems land. Think of it like a massive journal that records everything that happens — every login attempt, file access, network connection, and system event. You can search through these logs to find suspicious activity or trace what happened during an incident.'
+        }
+        whenToUse={
+          'You\'ve spotted a suspicious alert and want to see the raw log data behind it. Or you want to search for all events from a specific IP address, user account, or time period to understand what happened.'
+        }
+        steps={[
+          {
+            title: 'Choose a tab: Raw Events vs Normalized Events',
+            description:
+              'Raw Events = the original unmodified log text exactly as received from the system (e.g. a Windows Event Log entry). Normalized Events = that same log parsed and structured into fields like IP, username, severity — easier to filter and compare.',
+          },
+          {
+            title: 'Set a Log Source (optional)',
+            description:
+              'Type the name of the system that generated the logs, e.g. local_windows_security, auth.log, apache_access. Leave blank to search all sources.',
+          },
+          {
+            title: 'Set a date range (optional but recommended)',
+            description:
+              'Narrow results to the time window you care about. For example, if an alert triggered at 10pm, search 9:50pm–10:10pm to find context.',
+          },
+          {
+            title: 'Type a search term',
+            description:
+              'Search for a username, IP address, error code, or keyword like "failed" or "denied". This searches inside the log content.',
+          },
+          {
+            title: 'Click Search, then click View on any result',
+            description:
+              'The View button opens the full log entry. In Raw Events you see the raw text. In Normalized Events you see structured fields like Source IP, Hostname, Severity.',
+          },
+        ]}
+        tip="Start with the Raw Events tab to see exactly what your system logged. Then switch to Normalized Events to filter by severity or event type — this is faster for finding high-risk events."
+        quickActions={[
+          {
+            label: 'Search: Windows Security Logs',
+            description: 'Pre-fills Log Source with local_windows_security',
+            onClick: () => {
+              setSearchFilters((f) => ({ ...f, log_source: 'local_windows_security', search_term: '' }));
+              setTimeout(handleSearch, 100);
+            },
+          },
+          {
+            label: 'Search: Failed logins',
+            description: 'Searches for "failed" keyword across all sources',
+            onClick: () => {
+              setSearchFilters((f) => ({ ...f, log_source: '', search_term: 'failed' }));
+              setTimeout(handleSearch, 100);
+            },
+          },
+          {
+            label: 'Search: Credential access',
+            description: 'Searches for credential-related events',
+            onClick: () => {
+              setSearchFilters((f) => ({ ...f, log_source: '', search_term: 'Credential' }));
+              setTimeout(handleSearch, 100);
+            },
+          },
+        ]}
+        defaultOpen={false}
+      />
+
       {/* Search Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
@@ -182,13 +250,19 @@ const LogExplorerPage: React.FC = () => {
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
-              <TextField
-                fullWidth
-                label="Log Source"
-                value={searchFilters.log_source}
-                onChange={(e) => setSearchFilters({ ...searchFilters, log_source: e.target.value })}
-                placeholder="e.g., auth.log, web.log"
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Log Source"
+                  value={searchFilters.log_source}
+                  onChange={(e) => setSearchFilters({ ...searchFilters, log_source: e.target.value })}
+                  placeholder="e.g., auth.log, web.log"
+                />
+                <HelpTooltip
+                  title={HELP_CONTENT.logs.logSource.title}
+                  description={HELP_CONTENT.logs.logSource.description}
+                />
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
               <TextField
@@ -324,8 +398,13 @@ const LogExplorerPage: React.FC = () => {
             </TableContainer>
           )}
           {rawEvents.length === 0 && !loading && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color="textSecondary">No raw events found. Try adjusting your search filters.</Typography>
+            <Box sx={{ py: 4 }}>
+              <EmptyState
+                icon={<SearchIcon />}
+                title="No raw events found"
+                description="Adjust your log source, date range, or search filters, then run the search again to find ingested events."
+                action={{ label: 'Search again', onClick: searchRawEvents }}
+              />
             </Box>
           )}
         </TabPanel>
@@ -384,8 +463,13 @@ const LogExplorerPage: React.FC = () => {
             </TableContainer>
           )}
           {normalizedEvents.length === 0 && !loading && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <Typography color="textSecondary">No normalized events found. Try adjusting your search filters.</Typography>
+            <Box sx={{ py: 4 }}>
+              <EmptyState
+                icon={<SearchIcon />}
+                title="No normalized events found"
+                description="Use filters or switch to raw events to broaden your investigation scope."
+                action={{ label: 'Search normalized events', onClick: searchNormalizedEvents }}
+              />
             </Box>
           )}
         </TabPanel>

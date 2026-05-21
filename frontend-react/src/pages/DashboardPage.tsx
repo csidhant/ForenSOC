@@ -5,13 +5,13 @@ import {
   CardContent,
   Typography,
   Box,
-  CircularProgress,
   Alert,
   Chip,
   Avatar,
   IconButton,
   Tooltip,
   LinearProgress,
+  Skeleton,
 } from '@mui/material';
 import {
   FolderOpen as CaseIcon,
@@ -22,6 +22,8 @@ import {
   Refresh as RefreshIcon,
   Circle as DotIcon,
 } from '@mui/icons-material';
+import { HelpTooltip, EmptyState, SkeletonLoader, StudentGuidePanel } from '@components';
+import { HELP_CONTENT } from '@utils/helpContent';
 import { apiService } from '@services/apiService';
 import {
   BarChart,
@@ -92,7 +94,7 @@ const StatCard: React.FC<StatCardProps> = ({
             {title}
           </Typography>
           {loading ? (
-            <CircularProgress size={28} />
+            <Skeleton variant="text" width={60} height={40} />
           ) : (
             <Typography variant="h4" sx={{ fontWeight: 700, color: 'text.primary' }}>
               {value}
@@ -264,12 +266,34 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Box>
-      {/* Header */}
+      {/* Student Guide */}
+      <StudentGuidePanel
+        pageTitle="Security Operations Dashboard"
+        pageExplained={
+          'The Dashboard is your mission control — it shows a live summary of everything happening in your environment. Stat cards show counts of active cases, unreviewed alerts, and critical threats. The charts help you spot patterns (e.g. "why did alerts spike on Thursday?"). The Threat Map shows where attacks are coming from geographically.'
+        }
+        whenToUse="Every time you log in. Check the Dashboard first to see if there are any critical alerts or spikes in activity that need immediate attention."
+        steps={[
+          { title: 'Read the stat cards (top row)', description: 'These show your current totals: Active Cases, Unreviewed Alerts, Critical Alerts, and Evidence files. Red numbers need your attention right now.' },
+          { title: 'Check the charts', description: 'Alert Distribution (pie chart) shows severity breakdown. Case Status shows how investigations are progressing. Weekly Trend shows if attacks are increasing or decreasing.' },
+          { title: 'Review Recent Alerts (bottom left)', description: 'The latest flagged events. Click any alert to investigate. Start with Critical and High severity.' },
+          { title: 'Click through to details', description: 'From the dashboard you can navigate to Alerts, Cases, or Evidence pages to dive deeper into anything that catches your eye.' },
+        ]}
+        tip="If the Critical Alerts count is non-zero, go to the Alerts page immediately and sort by severity. Never ignore critical alerts."
+      />
+
+
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box>
-          <Typography variant="h4" sx={{ fontWeight: 700 }}>
-            Security Operations Dashboard
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              Security Operations Dashboard
+            </Typography>
+            <HelpTooltip
+              title={HELP_CONTENT.dashboard.overview.title}
+              description={HELP_CONTENT.dashboard.overview.description}
+            />
+          </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             Last updated: {lastRefresh.toLocaleTimeString()}
           </Typography>
@@ -290,7 +314,7 @@ const DashboardPage: React.FC = () => {
         </Box>
       </Box>
 
-      {loading && <LinearProgress sx={{ mb: 2, borderRadius: 1 }} />}
+
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
@@ -347,7 +371,9 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 Alert Distribution
               </Typography>
-              {severityPieData.length > 0 ? (
+              {loading && !stats ? (
+                <SkeletonLoader type="chart" height={280} />
+              ) : severityPieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={280}>
                   <PieChart>
                     <Pie
@@ -383,19 +409,23 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 Case Overview
               </Typography>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={caseBarData} barSize={60}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                  <XAxis dataKey="name" />
-                  <YAxis allowDecimals={false} />
-                  <ChartTooltip />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                    {caseBarData.map((entry, index) => (
-                      <Cell key={`bar-${index}`} fill={entry.fill} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {loading && !stats ? (
+                <SkeletonLoader type="chart" height={280} />
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={caseBarData} barSize={60}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                    <XAxis dataKey="name" />
+                    <YAxis allowDecimals={false} />
+                    <ChartTooltip />
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                      {caseBarData.map((entry, index) => (
+                        <Cell key={`bar-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -407,27 +437,31 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 Weekly Trend
               </Typography>
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={activityTrend}>
-                  <defs>
-                    <linearGradient id="alertGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7b1fa2" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#7b1fa2" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="caseGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1976d2" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#1976d2" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                  <XAxis dataKey="day" />
-                  <YAxis allowDecimals={false} />
-                  <ChartTooltip />
-                  <Legend />
-                  <Area type="monotone" dataKey="alerts" stroke="#7b1fa2" fill="url(#alertGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="cases" stroke="#1976d2" fill="url(#caseGrad)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
+              {loading && !stats ? (
+                <SkeletonLoader type="chart" height={280} />
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <AreaChart data={activityTrend}>
+                    <defs>
+                      <linearGradient id="alertGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#7b1fa2" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#7b1fa2" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="caseGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#1976d2" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#1976d2" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                    <XAxis dataKey="day" />
+                    <YAxis allowDecimals={false} />
+                    <ChartTooltip />
+                    <Legend />
+                    <Area type="monotone" dataKey="alerts" stroke="#7b1fa2" fill="url(#alertGrad)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="cases" stroke="#1976d2" fill="url(#caseGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -436,7 +470,18 @@ const DashboardPage: React.FC = () => {
       {/* Threat Map + Recent Alerts */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} md={8}>
-          <GlobalThreatMap markers={markers} />
+          {loading && !stats ? (
+            <Card sx={{ height: 380 }}>
+              <CardContent sx={{ height: '100%' }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  Global Threat Map
+                </Typography>
+                <SkeletonLoader type="chart" height={300} />
+              </CardContent>
+            </Card>
+          ) : (
+            <GlobalThreatMap markers={markers} />
+          )}
         </Grid>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', minHeight: 380 }}>
@@ -444,55 +489,61 @@ const DashboardPage: React.FC = () => {
               <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                 Recent Alerts
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                {recentAlerts.length > 0
-                  ? recentAlerts.slice(0, 7).map((alert: any, i: number) => (
-                      <Box
-                        key={alert.id || i}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          gap: 1.5,
-                          p: 1.5,
-                          borderRadius: 1,
-                          bgcolor: 'action.hover',
-                          borderLeft: `3px solid ${severityColors[alert.severity] || '#9e9e9e'}`,
-                        }}
-                      >
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="body2"
-                            sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                          >
-                            {alert.title || alert.name || 'Security Alert'}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                            <Chip
-                              label={alert.severity || 'Unknown'}
-                              size="small"
-                              sx={{
-                                height: 18,
-                                fontSize: '0.65rem',
-                                bgcolor: severityColors[alert.severity] || '#9e9e9e',
-                                color: '#fff',
-                              }}
-                            />
-                            <Typography variant="caption" color="text.secondary">
-                              {alert.source_ip || 'Internal'}
+              {loading && !stats ? (
+                <SkeletonLoader type="text" count={6} />
+              ) : (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {recentAlerts.length > 0
+                    ? recentAlerts.slice(0, 7).map((alert: any, i: number) => (
+                        <Box
+                          key={alert.id || i}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                            borderLeft: `3px solid ${severityColors[alert.severity] || '#9e9e9e'}`,
+                          }}
+                        >
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            >
+                              {alert.title || alert.name || 'Security Alert'}
                             </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                              <Chip
+                                label={alert.severity || 'Unknown'}
+                                size="small"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.65rem',
+                                  bgcolor: severityColors[alert.severity] || '#9e9e9e',
+                                  color: '#fff',
+                                }}
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                {alert.source_ip || 'Internal'}
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
-                      </Box>
-                    ))
-                  : !loading && (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <SecurityIcon sx={{ fontSize: 40, color: 'text.disabled', mb: 1 }} />
-                        <Typography variant="body2" color="text.secondary">
-                          No recent alerts
-                        </Typography>
-                      </Box>
-                    )}
-              </Box>
+                      ))
+                    : !loading && (
+                        <Box sx={{ py: 4 }}>
+                          <EmptyState
+                            icon={<SecurityIcon />}
+                            title="No recent alerts"
+                            description="Your dashboard will show the latest alerts once event ingestion is active."
+                            action={{ label: 'Refresh dashboard', onClick: loadStats }}
+                          />
+                        </Box>
+                      )}
+                </Box>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -504,29 +555,33 @@ const DashboardPage: React.FC = () => {
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
             System Health
           </Typography>
-          <Grid container spacing={3}>
-            {[
-              { label: 'API Backend', value: systemStatus === 'online' ? 100 : 50, status: systemStatus === 'online' ? 'Operational' : 'Degraded', color: systemStatus === 'online' ? 'success' : 'warning' },
-              { label: 'Detection Engine', value: 100, status: 'Operational', color: 'success' },
-              { label: 'Evidence Storage', value: 100, status: 'Operational', color: 'success' },
-              { label: 'Alert Processing', value: 100, status: 'Operational', color: 'success' },
-            ].map((item) => (
-              <Grid item xs={12} sm={6} key={item.label}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {item.label}
-                  </Typography>
-                  <Chip label={item.status} size="small" color={item.color as any} variant="outlined" />
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={item.value}
-                  color={item.color as any}
-                  sx={{ height: 6, borderRadius: 3 }}
-                />
-              </Grid>
-            ))}
-          </Grid>
+          {loading && !stats ? (
+            <SkeletonLoader type="text" count={4} />
+          ) : (
+            <Grid container spacing={3}>
+              {[
+                { label: 'API Backend', value: systemStatus === 'online' ? 100 : 50, status: systemStatus === 'online' ? 'Operational' : 'Degraded', color: systemStatus === 'online' ? 'success' : 'warning' },
+                { label: 'Detection Engine', value: 100, status: 'Operational', color: 'success' },
+                { label: 'Evidence Storage', value: 100, status: 'Operational', color: 'success' },
+                { label: 'Alert Processing', value: 100, status: 'Operational', color: 'success' },
+              ].map((item) => (
+                <Grid item xs={12} sm={6} key={item.label}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {item.label}
+                    </Typography>
+                    <Chip label={item.status} size="small" color={item.color as any} variant="outlined" />
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={item.value}
+                    color={item.color as any}
+                    sx={{ height: 6, borderRadius: 3 }}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </CardContent>
       </Card>
     </Box>

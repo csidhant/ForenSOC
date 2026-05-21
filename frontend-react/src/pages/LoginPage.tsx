@@ -18,6 +18,9 @@ import {
   Shield as ShieldIcon,
   Lock as LockIcon,
   ArrowForward as ArrowIcon,
+  Security as AnalystIcon,
+  Science as ForensicIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useAuthStore } from '@utils/store';
@@ -292,26 +295,103 @@ const LoginPage: React.FC = () => {
           </Box>
 
           <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.08)' }}>
-            <Typography variant="caption" sx={{ color: '#475569', px: 1 }}>
-              Demo Access
+            <Typography variant="caption" sx={{ color: '#64748B', px: 1, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1.2 }}>
+              Student Study Profiles (Click to Quick Login)
             </Typography>
           </Divider>
 
-          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 3 }}>
-            <Chip
-              label="Username: admin"
-              size="small"
-              sx={{ bgcolor: 'rgba(59,130,246,0.1)', color: '#93C5FD', border: '1px solid rgba(59,130,246,0.2)' }}
-            />
-            <Chip
-              label="Password: admin"
-              size="small"
-              sx={{ bgcolor: 'rgba(139,92,246,0.1)', color: '#C4B5FD', border: '1px solid rgba(139,92,246,0.2)' }}
-            />
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
+            {[
+              {
+                role: 'Administrator',
+                user: 'admin',
+                pass: 'admin',
+                desc: 'Full systems access, rule engineering, audit logs',
+                color: '#3B82F6',
+                icon: <AdminIcon sx={{ fontSize: 18 }} />,
+              },
+              {
+                role: 'Security Analyst',
+                user: 'analyst',
+                pass: 'analyst',
+                desc: 'Alert triage, trend analysis, threat mapping',
+                color: '#10B981',
+                icon: <AnalystIcon sx={{ fontSize: 18 }} />,
+              },
+              {
+                role: 'Investigation Analyst',
+                user: 'investigator',
+                pass: 'investigator',
+                desc: 'Deep forensics (YARA/Zeek/Volatility), cases, timelines',
+                color: '#8B5CF6',
+                icon: <ForensicIcon sx={{ fontSize: 18 }} />,
+              },
+              {
+                role: 'Read-only Viewer',
+                user: 'viewer',
+                pass: 'viewer',
+                desc: 'Observational metrics, compliance reporting reviews',
+                color: '#64748B',
+                icon: <Visibility sx={{ fontSize: 18 }} />,
+              },
+            ].map((profile) => (
+              <Box
+                key={profile.role}
+                onClick={() => {
+                  setUsername(profile.user);
+                  setPassword(profile.pass);
+                }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  p: 1.2,
+                  borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,255,255,0.04)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': {
+                    background: 'rgba(255,255,255,0.06)',
+                    borderColor: `${profile.color}40`,
+                    transform: 'translateY(-2px)',
+                    boxShadow: `0 4px 12px ${profile.color}10`,
+                  },
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: `${profile.color}15`,
+                    color: profile.color,
+                  }}
+                >
+                  {profile.icon}
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#F1F5F9' }}>
+                      {profile.role}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: profile.color, fontWeight: 600, fontSize: '0.7rem' }}>
+                      {profile.user} : {profile.pass}
+                    </Typography>
+                  </Box>
+                  <Typography variant="caption" sx={{ color: '#64748B', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {profile.desc}
+                  </Typography>
+                </Box>
+              </Box>
+            ))}
           </Box>
 
           <Typography variant="body2" sx={{ textAlign: 'center', color: '#475569' }}>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
               component={RouterLink}
               to="/register"

@@ -122,3 +122,47 @@ def scan_evidence(
         raise ValueError(f"YARA compilation or scanning failed: {e}")
 
     return results
+
+def scan_file_path(file_path: str) -> List[dict]:
+    """Scan a raw file path with all compiled YARA rules without DB interactions."""
+    ensure_rules_dir()
+    
+    path = Path(file_path)
+    if not path.is_file():
+        raise ValueError(f"File not found at {file_path}")
+
+    rule_files = list(RULES_DIR.glob("*.yar")) + list(RULES_DIR.glob("*.yara"))
+    if not rule_files:
+        return []
+
+    results = []
+    try:
+        rules = yara.compile(filepaths={str(f.stem): str(f) for f in rule_files})
+        matches = rules.match(str(path))
+
+        for match in matches:
+            severity = match.meta.get("severity", "Medium")
+            category = match.meta.get("category", "Malware")
+            description = match.meta.get("description", "")
+
+            matched_strings = []
+            for offset, identifier, data in match.strings:
+                try:
+                    string_val = data.decode("utf-8", errors="replace")
+                    matched_strings.append(f"{identifier}: {string_val}")
+                except Exception:
+                    matched_strings.append(f"{identifier}: [binary data]")
+
+            results.append({
+                "rule_name": match.rule,
+                "rule_severity": severity,
+                "rule_category": category,
+                "matched_strings": "\\n".join(matched_strings[:10]),
+                "match_count": len(match.strings),
+                "description": description
+            })
+    except yara.Error as e:
+        print(f"YARA Error: {e}")
+        raise ValueError(f"YARA scanning failed: {e}")
+
+    return results

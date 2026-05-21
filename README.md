@@ -1,333 +1,304 @@
 <div align="center">
-  <img src="https://img.icons8.com/color/128/000000/shield.png" alt="ForenSOC Logo" width="100"/>
-  <h1>🛡️ ForenSOC</h1>
-  <p><strong>Advanced Integrated SOC & Digital Forensics Platform</strong></p>
-  
-  [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
-  [![React](https://img.shields.io/badge/React-18-blue.svg?style=flat&logo=react)](https://reactjs.org/)
-  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-  [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12%2B-336791.svg?style=flat&logo=postgresql)](https://www.postgresql.org/)
-  [![Celery](https://img.shields.io/badge/Celery-Async_Tasks-37814A.svg?style=flat&logo=celery)](#)
-  [![Build](https://img.shields.io/badge/Build-Passing-success.svg)](#)
-  [![Status](https://img.shields.io/badge/Status-Production_Ready-success.svg)](#)
-  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+# 🛡️ ForenSOC
+
+**Advanced Integrated SOC & Digital Forensics Platform**
+
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker)](https://docs.docker.com/compose/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat)](LICENSE)
+[![Deploy to Render](https://img.shields.io/badge/Deploy-Render.com-46E3B7?style=flat&logo=render)](https://render.com)
+[![Deploy to Vercel](https://img.shields.io/badge/Deploy-Vercel-black?style=flat&logo=vercel)](https://vercel.com)
+
 </div>
 
-<br />
+---
 
-## 📖 Overview
+## What is ForenSOC?
 
-**ForenSOC** is an enterprise-grade, full-stack Security Operations Center (SOC) and Digital Forensics and Incident Response (DFIR) platform. Built to bridge the gap between real-time threat detection and post-incident forensic analysis, ForenSOC unifies log management, threat intelligence, case tracking, and deep forensic workflows into a single cohesive, high-performance web application.
+ForenSOC is an open-source, enterprise-grade **Security Operations Center (SOC)** and **Digital Forensics & Incident Response (DFIR)** platform. It unifies log ingestion, real-time threat detection, case management, evidence analysis, and forensic reporting into a single polished web application — designed so that analysts with minimal experience can use it from day one.
 
-Whether you are conducting memory analysis, triaging network PCAPs, or managing cross-team incident investigations, ForenSOC provides the tooling and architectural scalability necessary to protect and investigate modern environments.
+It is purpose-built to rival commercial tools like IBM QRadar, Splunk SIEM, and TheHive — while being completely free to self-host.
 
 ---
 
-## 📑 Table of Contents
-- [✅ Build Status](#-build-status)
-- [✨ Enterprise Features](#-enterprise-features)
-- [🤖 Zero-Click Automation](#-zero-click-automation)
-- [🔄 Core Architecture Workflow](#-core-architecture-workflow)
-- [🚀 Quick Start Guide](#️-installation--setup)
-- [🔐 Default Credentials](#-default-credentials)
-- [📂 Project Architecture](#-project-architecture)
-- [🛡️ Security & Performance Standards](#️-security--performance-standards)
-- [🖥️ UI Changelog](#️-ui-changelog)
-- [📋 Roadmap & Next Steps](#-roadmap--next-steps)
-- [📚 Technical Documentation](#-technical-documentation)
-- [📄 License](#-license)
+## Screenshots & Key Features
+
+| Dashboard | Alerts | Cases |
+|-----------|--------|-------|
+| Live stat cards, charts, threat map | Severity-coded feed, WS push, resolve | Priority-colored cards, search, filters |
+
+### Core Capabilities
+
+| Category | Features |
+|----------|----------|
+| 🔍 **Threat Detection** | Sigma rule engine, SSH brute-force, web scan detection, multi-failed-login rules |
+| 📡 **Real-time** | WebSocket live alert feed, desktop toast notifications, Slack webhooks |
+| 🗂️ **Case Management** | Full CRUD, priority/status tracking, timeline reconstruction, PDF reports |
+| 🔬 **Digital Forensics** | YARA scanning, Volatility memory analysis, Zeek PCAP parsing, Suricata EVE |
+| 🔒 **Evidence Vault** | SHA-256 + MD5 integrity, chain-of-custody tracking, secure download |
+| 🌍 **Threat Intelligence** | GeoIP mapping, VirusTotal/Shodan/AlienVault enrichment, public IP/hash search |
+| 📊 **Reporting** | One-click PDF export, MITRE ATT&CK ATT&CK heatmaps, audit trails |
+| 🤖 **Automation** | Folder watcher (`ingest_drop/`), Windows Event Log poller, background workers |
+| 👤 **Access Control** | JWT auth, bcrypt passwords, RBAC (admin / analyst / investigator / viewer) |
+| 🎛️ **Command Palette** | Global keyboard-driven search center (`Ctrl+K`) for alerts, cases, evidence, rules, and system actions |
+| 📚 **Glossary & Tour** | Searchable DFIR dictionary (Sigma, YARA, Zeek, Volatility), tooltips, and interactive onboarding tours |
+| ⚡ **Premium Polish** | Glassmorphic textures, spring-animated quick action FAB, breadcrumbs trail, and loading skeleton grids |
 
 ---
 
-## ✅ Build Status
+## Quick Start — Three Ways to Run
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| **Frontend Build** | ✅ Passing | TypeScript compiled, Vite bundle: 1,311 kB (389 kB gzip) |
-| **Backend Startup** | ✅ Passing | FastAPI + SQLite boots cleanly on `uvicorn` |
-| **TypeScript** | ✅ Zero Errors | All TS6133 / TS2322 warnings resolved |
-| **API Docs** | ✅ Live | http://localhost:8000/api/docs (Swagger UI) |
-| **WebSocket** | ✅ Active | `python-socketio` real-time telemetry connected |
+### ⚡ Option 1: One-Click Windows (Local Dev)
 
----
-
-## ✨ Enterprise Features
-
-### 🔍 Threat Detection & Log Management
-| Feature | Description |
-|---------|-------------|
-| **Universal Log Ingestion** | Ingest and normalize raw logs into standardized forensic events. |
-| **Live Windows Collector** | **NEW**: Automatically polls and analyzes local Windows Security Event logs in real-time. |
-| **Auto-Ingest Watcher** | **NEW**: Zero-click folder monitoring—drop logs into `ingest_drop/` for instant analysis. |
-| **Sigma Rule Engine** | Fully functional YAML-based Sigma rule parser for community threat signatures. |
-| **Smart AI Analyst** | **NEW**: Automatically translates technical alerts into plain, actionable English recommendations. |
-| **Real-time WebSockets** | **NEW**: Instant "Live Feed" of logs and alerts pushed directly to the UI—no refresh required. |
-| **Geographic Mapping** | **NEW**: Interactive Global Threat Map with automated Geo-IP resolution and location tracking. |
-| **Threat Intelligence** | Automated enrichments via VirusTotal, Shodan, and AlienVault OTX integrations. |
-
-### 💼 Case & Incident Management
-| Feature | Description |
-|---------|-------------|
-| **Analyst Workflows** | Bulk assignment, prioritized queueing, and multi-tenant workspace isolation. |
-| **Priority Card Grid** | **NEW**: Cases displayed as color-coded cards with priority indicators and status badges. |
-| **Unified Timelines** | Automatically aggregates alerts, logs, evidence, and chain-of-custody actions into chronological incident timelines. |
-| **Proactive Notifications**| Real-time Slack and Email webhooks for high-severity critical alerts. |
-
-### 🔬 Digital Forensics Vault
-| Feature | Description |
-|---------|-------------|
-| **Evidence Integrity** | Secure upload vault with automatic SHA-256 / MD5 hashing and strict Chain of Custody tracking. |
-| **Memory Forensics** | Automated integrations with **Volatility 3** for malicious process extraction. |
-| **Network Forensics** | Deep packet analysis via **Zeek** and **Suricata EVE** payloads. |
-| **Malware Scanning** | Automated binary analysis utilizing built-in **YARA** rule scans. |
-
-### 📊 Reporting & Compliance
-| Feature | Description |
-|---------|-------------|
-| **Audit Logging** | Comprehensive, immutable system audit trails. |
-| **PDF Generation** | One-click professional forensic PDF reports including executive summaries, artifacts, and timeline visualizations. |
-| **Security & Tuning** | SlowAPI rate limiting, robust JWT authentication, role-based access control (RBAC), and SQL injection safeguards. |
-| **Platform Settings** | **NEW**: Rich preference center allowing real-time theme toggling (Light/Dark mode), custom alert notifications, and user account management. |
-
----
-
-## 🤖 Zero-Click Automation
-ForenSOC is designed for ease of use. It features layers of background automation:
-1. **Live Local Collector**: Automatically polls the local Windows Security Event Log every 60 seconds.
-2. **Folder Watcher**: Monitors `backend/ingest_drop/`. Any `.log` file placed here is automatically processed.
-3. **Smart Analyst**: Explains technical alerts in natural language for non-technical users.
-4. **Real-time Push**: Detections are instantly pushed to all active analysts via WebSockets and Live Toasts.
-5. **Geo-Discovery**: Automatically pins the source of every network-based attack on a global map.
-6. **Dynamic Theme Engine**: Automatically aligns interface visuals to a curated glassmorphic dark/light palette according to system settings.
-
----
-
-## 🔄 Core Architecture Workflow
-
-ForenSOC operates on a sequential, highly integrated data pipeline:
-
-1. **Ingest**: Raw logs, PCAPs, and Memory dumps are uploaded or streamed into the platform.
-2. **Detect**: The backend normalizes the logs and passes them through the Sigma Rule Engine. Matches spawn Alerts.
-3. **Investigate**: Alerts are bundled into Cases. Analysts upload physical evidence to the Forensics Vault.
-4. **Analyze**: Background Celery workers trigger YARA/Volatility/Zeek modules on the evidence asynchronously.
-5. **Reconstruct**: The system builds a unified, second-by-second timeline of the attack from all available data.
-6. **Report**: PDF and MITRE mapping reports are finalized for compliance.
-
----
-
-## 📚 Documentation
-For a detailed guide on how to use ForenSOC, especially for students and new users, please refer to our comprehensive manual:
-- **[Student's Guide to ForenSOC (PDF)](./ForenSOC_Students_Guide.pdf)**
-
----
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- **Python 3.10+** (Added to `PATH`)
-- **Node.js 18+ / LTS** (npm included)
-- **Redis** (For async task processing)
-- **PostgreSQL** (Recommended for production, SQLite used by default for rapid setup)
-- **Docker & Docker Compose** (Optional, but highly recommended)
-
-### ⚡ The Fastest Way: One-Click Script (Windows)
 ```bat
-# Double-click this file from the project root:
 run-forensoc.bat
 ```
-This single script will:
-- ✅ Create the Python virtual environment if it doesn't exist
-- ✅ Install all backend dependencies from `requirements.txt`
-- ✅ Install frontend `node_modules` if missing
-- ✅ Start the **FastAPI backend** at http://127.0.0.1:8000
-- ✅ Start the **Auto-Ingest Automation** watcher
-- ✅ Start the **React frontend** at http://localhost:3000
 
-### 🐳 Docker Compose (Full Stack)
-The absolute fastest way to deploy ForenSOC in a production-like environment:
+Starts backend on `http://localhost:8000` and frontend on `http://localhost:3000` automatically.
+
+---
+
+### 🐳 Option 2: Docker Compose (Recommended for Local + Self-Hosted)
 
 ```bash
-git clone https://github.com/your-org/ForenSOC.git
+# Clone the repo
+git clone https://github.com/YOUR-USERNAME/ForenSOC.git
 cd ForenSOC
 
-# Build and start all services in detached mode
-docker compose up --build -d
-```
-- **Web UI**: [http://localhost:3000](http://localhost:3000)
-- **API Swagger Docs**: [http://localhost:8000/api/docs](http://localhost:8000/api/docs)
-
----
-
-### 💻 Manual Setup (Local Development)
-
-#### 1. Backend Setup
-```bash
-cd backend
-python -m venv venv
-
-# Activate the virtual environment
-# Windows: venv\Scripts\activate
-# Linux/macOS: source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure Environment
+# Create your environment file
 cp .env.example .env
-# Important: Update .env with your REDIS_URL, SLACK_WEBHOOK_URL, and SECRET_KEY
+# Edit .env and set a strong SECRET_KEY and POSTGRES_PASSWORD
 
-# Run the API Server
-python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+# Start all services (nginx + backend + frontend + postgres + redis)
+docker compose up --build -d
+
+# Check everything is healthy
+docker compose ps
 ```
 
-#### 2. Start the Automation Watcher
-In a separate terminal, activate the backend virtual environment and run:
-```bash
-cd backend
-.\venv\Scripts\activate   # Windows
-python automation_service.py
-```
-
-#### 3. Start the Async Worker (Optional — for forensics tasks)
-```bash
-cd backend
-celery -A app.celery_app:celery_app worker -l info
-```
-
-#### 4. Frontend Setup
-In a third terminal instance:
-```bash
-cd frontend-react
-npm install
-npm run dev
-```
-Navigate to **http://localhost:3000** to access the dashboard.
+| Service | URL |
+|---------|-----|
+| Web UI | http://localhost |
+| API Docs (Swagger) | http://localhost/api/docs |
+| Backend direct | http://localhost:8000 |
 
 ---
 
-## 🔐 Default Credentials
-On the first run, the system seeds the database with the following default administrator credentials. **Please change these immediately in your `.env` file before exposing the application to any network.**
+### ☁️ Option 3: Zero-Cost Online Hosting (Student-Friendly Setup)
 
-| Field | Value |
-|-------|-------|
-| **Username** | `admin` |
-| **Email** | `admin@forensoc.local` |
-| **Password** | `admin` |
-| **API Docs** | http://localhost:8000/api/docs |
+Students can deploy a fully functioning, public-facing copy of ForenSOC online completely for **FREE**! This is perfect for portfolio showcases, homework assignments, or team labs. We leverage industry-standard cloud providers:
+*   **GitHub**: Code repository
+*   **Vercel**: Ultra-fast frontend hosting
+*   **Render**: Python/FastAPI backend hosting
+*   **Supabase**: Free persistent PostgreSQL database (prevents database deletion after 90 days)
+
+For the detailed, visual layout see **[docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)**. Here is the direct 5-step quick-deploy pipeline:
+
+#### Step 1: Create a Free Persistent Database (Supabase)
+1.  Sign up for a free account at [Supabase.com](https://supabase.com).
+2.  Click **New Project**, name it `ForenSOC-DB`, and set a strong database password.
+3.  Once created, navigate to **Project Settings** → **Database** → **Connection String** → select **URI** (looks like `postgresql://postgres:[YOUR-PASSWORD]...`). Copy this connection string.
+
+#### Step 2: Push Code to your GitHub
+1.  Fork this repository to your own GitHub account.
+2.  Clone your fork locally or work directly in your browser.
+
+#### Step 3: Deploy the Backend on Render.com
+1.  Sign up for a free account at [Render.com](https://render.com).
+2.  Click **New +** (top right) → **Blueprint**.
+3.  Connect your GitHub account and select your `ForenSOC` repository.
+4.  Render will automatically read the built-in `render.yaml` blueprint. Click **Apply**.
+5.  Wait for the environment initialization. Navigate to the created **forensoc-backend** Web Service:
+    *   Go to **Environment** settings.
+    *   Modify `DATABASE_URL` to be your **Supabase Connection URI** from Step 1.
+    *   Change `SECRET_KEY` to a random long string (e.g. `my-student-secret-token-key-12345`).
+    *   Click **Save Changes** (Render will auto-redeploy with your Supabase database!).
+6.  Once live, copy the backend URL (e.g. `https://forensoc-backend-xxxx.onrender.com`).
+
+#### Step 4: Deploy the Frontend on Vercel
+1.  Sign up at [Vercel.com](https://vercel.com) using your GitHub account.
+2.  Click **Add New** → **Project**, and select your `ForenSOC` GitHub repository.
+3.  Vercel will detect a multi-workspace structure. **CRITICAL:** 
+    *   Set **Root Directory** to `frontend-react`.
+    *   Vercel will auto-detect Vite as the framework.
+4.  Expand the **Environment Variables** section and add:
+    *   `VITE_API_BASE_URL` = `https://[YOUR-RENDER-BACKEND-URL]/api` (from Step 3)
+5.  Click **Deploy**. Within 2 minutes, Vercel will give you a live production URL (e.g., `https://forensoc-frontend.vercel.app`).
+
+#### Step 5: Secure CORS Settings
+1.  Go back to your **Render Dashboard** → **forensoc-backend** Web Service → **Environment**.
+2.  Update `ALLOWED_ORIGINS_STR` = `https://[YOUR-VERCEL-FRONTEND-URL]` (from Step 4, no trailing slash).
+3.  Click **Save Changes**. 
+
+🎉 **Done!** Open your Vercel URL in your browser. You can now log in as any role (like `admin`/`admin` or `analyst`/`analyst`) from anywhere in the world!
 
 ---
 
-## 📂 Project Architecture
+---
 
-```text
+## Authentication & Role-Based Login Options
+
+ForenSOC provides a secure, flexible authentication system based on JWT (JSON Web Tokens) and Role-Based Access Control (RBAC). 
+
+### 1. Available Login Types
+
+*   **Demo & Quick-Start Login (Pre-seeded):**
+    For quick local development, evaluation, and classroom environments, a pre-seeded administrator account is initialized automatically.
+    *   **Username:** `admin`
+    *   **Password:** `admin` (or `ForenSOC@2024!` depending on your `.env` settings)
+    *   **Email:** `admin@forensoc.local`
+    *   *Note: These credentials are conveniently suggested on the login interface for frictionless access.*
+
+*   **Self-Registration Login:**
+    New users can create their own custom accounts directly by clicking **Register now** on the login page (or navigating to `/register`). They can enter a unique username, email, and password, and instantly log in.
+
+*   **API Token-Based Access (Backend):**
+    Behind the scenes, all client interactions are authenticated using secure OAuth2 password bearer tokens. The server returns a JWT upon successful login, which the client includes in headers to securely invoke REST operations.
+
+---
+
+### 2. Available User Roles & Permissions
+
+Each user in ForenSOC is associated with a distinct role, allowing granular visibility and action restrictions:
+
+| Role | Username Example | Main Purpose / Permissions |
+| :--- | :--- | :--- |
+| 👑 **Admin** | `admin` | Full system administration, user provisioning, custom Sigma/YARA rules modification, and immutable system audit log visibility. |
+| 🛡️ **Security Analyst** | *User-defined* | Real-time threat alert triage, threat mapping, search & query logs, managing alerts, and quick investigative actions. |
+| 🔬 **Investigation Analyst** | *User-defined* | Deep incident response, Volatility memory forensics, Zeek network packet parsing, YARA scans, evidence custody management, timeline reconstruction, and security report compilation. |
+| 📊 **Read-only Viewer** | *User-defined* | Observation role with read-only dashboard access. Ideal for compliance auditors, executives, and security posture monitoring. |
+
+---
+
+---
+
+## Project Structure
+
+```
 ForenSOC/
-├── backend/                    FastAPI Application Core
+├── backend/                    Python / FastAPI
 │   ├── app/
-│   │   ├── api/                16 RESTful route modules
-│   │   │   ├── auth.py         JWT login, register, refresh
-│   │   │   ├── alerts.py       Alert CRUD + stats
-│   │   │   ├── cases.py        Case management
-│   │   │   ├── evidence.py     Forensic vault + chain-of-custody
-│   │   │   ├── detection.py    Sigma rule engine
-│   │   │   ├── forensics.py    Volatility / Zeek / YARA
-│   │   │   ├── timeline.py     Chronological event reconstruction
-│   │   │   ├── mitre.py        ATT&CK framework mapping
-│   │   │   ├── reports.py      PDF report generation
-│   │   │   └── audit.py        Immutable audit trail
-│   │   ├── crud/               Database access layers
-│   │   ├── models/             SQLAlchemy ORM schemas
-│   │   ├── schemas/            Pydantic validation models
-│   │   ├── services/           Threat Intel, Forensics, Timeline logic
-│   │   └── tasks/              Celery asynchronous workers
-│   ├── automation_service.py   Background watcher + Windows event poller
-│   ├── tests/                  Pytest suites
-│   └── requirements.txt        Python dependencies
-├── frontend-react/             React 18 + Vite + TypeScript
-│   ├── src/pages/              16 fully-built, production-ready pages
-│   ├── src/components/         Navigation, Routes, GlobalThreatMap
-│   ├── src/services/           apiService, socketService
-│   ├── src/theme/              Dark/Light MUI theme (glassmorphism)
-│   └── src/types/              TypeScript type definitions
-├── docs/                       Technical documentation & architecture
-│   ├── ARCHITECTURE_AND_API.md
-│   ├── DATABASE_SCHEMA.md
-│   └── PROJECT_DESIGN.md
-├── docker-compose.yml          Production deployment orchestration
-├── run-forensoc.bat            One-click Windows startup script
-└── IMPLEMENTATION_ROADMAP.md   Historical roadmap
+│   │   ├── api/                17 route modules (auth, alerts, cases, evidence …)
+│   │   ├── models/             SQLAlchemy ORM
+│   │   ├── schemas/            Pydantic validation
+│   │   ├── services/           Detection engine, forensics, threat intel, sockets
+│   │   ├── crud/               Database access layer
+│   │   └── tasks/              Celery async workers
+│   ├── automation_service.py   Folder watcher + Windows Event Log poller
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── .env.example
+│
+├── frontend-react/             React 18 + Vite + TypeScript + MUI
+│   ├── src/
+│   │   ├── pages/              17 fully-built pages
+│   │   ├── components/         Navigation, Routes, GlobalThreatMap
+│   │   ├── services/           apiService, socketService
+│   │   ├── theme/              Dark/Light glassmorphism MUI theme
+│   │   └── types/              TypeScript definitions
+│   ├── vercel.json             Vercel deployment config
+│   ├── Dockerfile              Multi-stage build (Node → nginx)
+│   └── .env.example
+│
+├── nginx/
+│   └── nginx.conf              Production reverse proxy config
+│
+├── docs/
+│   ├── DEPLOYMENT_GUIDE.md      ← How to go live (start here)
+│   ├── ARCHITECTURE_AND_API.md  Full API contract & system design
+│   ├── DATABASE_SCHEMA.md       Entity relationships & schema
+│   ├── USER_GUIDE.md            End-user walkthrough
+│   ├── USER_FRIENDLY_GUIDE.md   Onboarding, keyboard shortcuts, tooltips, glossary modal
+│   ├── PHASE_2_COMPLETION_REPORT.md Phase 2 premium feature delivery log
+│   ├── SECURITY.md              Security controls & hardening
+│   └── QUICK_REFERENCE.md       Cheat-sheet for analysts
+│
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          GitHub Actions CI/CD pipeline
+│
+├── docker-compose.yml          Full-stack compose (dev + prod)
+├── docker-compose.prod.yml     Production hardening overlay
+├── render.yaml                 Render.com one-click backend deploy
+├── run-forensoc.bat            Windows one-click local start
+└── .env.example                Root env template for docker-compose
 ```
 
 ---
 
-## 🛡️ Security & Performance Standards
+## Security Model
 
-### 🔒 Active Security Controls
 | Control | Implementation |
 |---------|---------------|
-| **Authentication** | Stateless JWT (24h expiry, `HS256` algorithm) |
-| **Authorization** | Hard RBAC — `admin`, `analyst`, `investigator`, `viewer` |
-| **Password Security** | bcrypt hashing with salting |
-| **Rate Limiting** | SlowAPI per-endpoint throttling |
-| **CORS Policy** | Strict allowlist (no wildcard `*`) |
-| **SQL Injection** | SQLAlchemy ORM parameterized queries |
-| **Evidence Integrity** | SHA-256 + MD5 hash verification on every upload |
-| **Audit Trail** | Immutable log of all mutating API operations |
-
-### ⚡ Performance Targets
-- **P95 API Response Time**: < 1000ms
-- **Database**: Indexed SQLAlchemy queries across all user constraints
-- **Scalability**: Async forensic integrations via Redis/Celery workers
-- **Frontend Bundle**: 1,311 kB raw · 389 kB gzip
+| Authentication | Stateless JWT (HS256, 24h expiry) |
+| Password hashing | bcrypt with salting |
+| Authorization | Hard RBAC — 4 roles, enforced per endpoint |
+| Rate limiting | SlowAPI per-endpoint throttling (200 req/min default) |
+| CORS | Strict origin allowlist — no wildcard `*` in production |
+| SQL injection | SQLAlchemy ORM parameterized queries |
+| Evidence integrity | SHA-256 + MD5 on every upload |
+| Audit trail | Immutable log of all write operations |
+| Transport | HTTPS enforced via nginx + Let's Encrypt (self-hosted) or auto via Vercel/Render |
 
 ---
 
-## 🖥️ UI Changelog
+## Documentation
 
-The following pages were fully redesigned for production quality:
-
-| Page | Changes |
-|------|---------|
-| **Login** | Premium split-panel dark design, feature showcase, demo credential chips, TLS badge |
-| **Register** | Glassmorphism card, password visibility toggle, branded design |
-| **Dashboard** | Real-time stat cards, Area/Bar/Pie charts, live alert feed, global threat map |
-| **Alerts** | Severity color badges, real-time WS listener, dual filters, stat row, view-detail modal, one-click resolve |
-| **Cases** | Priority-colored card grid, status filters, search bar, empty state CTA, hover animations |
-| **Settings** | Dark/Light mode toggle, notification preferences, password update, system info |
-| **Navigation** | Persistent collapsible sidebar, grouped nav items, status chip, safe role display |
-| **404** | Branded error page with gradient number and back-to-dashboard button |
-| **index.html** | Animated SVG favicon, loading splash, Inter font, Open Graph meta tags |
+| Document | Description |
+|----------|-------------|
+| **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** | How to deploy online — Docker VPS, Render+Vercel, CI/CD |
+| **[USER_GUIDE.md](docs/USER_GUIDE.md)** | How to use the platform as an analyst |
+| **[USER_FRIENDLY_GUIDE.md](docs/USER_FRIENDLY_GUIDE.md)** | Guide to onboarding, keyboard shortcuts, tooltips, and glossary modals |
+| **[PHASE_2_COMPLETION_REPORT.md](docs/PHASE_2_COMPLETION_REPORT.md)** | Status log capturing the complete user-experience & forensic polish delivery |
+| **[ARCHITECTURE_AND_API.md](docs/ARCHITECTURE_AND_API.md)** | API reference and system design |
+| **[DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md)** | Full database schema and entity relationships |
+| **[SECURITY.md](docs/SECURITY.md)** | Security controls, hardening guide, responsible disclosure |
+| **[QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** | Quick cheat-sheet for analysts |
 
 ---
 
-## 📋 Roadmap & Next Steps
+## CI/CD Pipeline
 
-### Immediate (Production Hardening)
-- [ ] **Code Splitting** — Lazy-load heavy pages (EvidenceVault, LogExplorer) to bring bundle below 500 kB
-- [ ] **PostgreSQL Migration** — Switch `DATABASE_URL` in `.env` for production-scale persistence
-- [ ] **Change Default Credentials** — Update `ADMIN_PASSWORD` in `backend/.env` before public exposure
+Every `git push` to `main` triggers the GitHub Actions pipeline (`.github/workflows/deploy.yml`):
 
-### Short-Term
-- [ ] **Redis + Celery** — Enable for async forensics (Volatility, YARA, Zeek analysis)
-- [ ] **HTTPS / TLS** — Add nginx reverse proxy with Let's Encrypt certificate
-- [ ] **E2E Tests** — Cypress test suite covering auth, alert flow, case management
-- [ ] **Docker Deploy** — `docker compose up --build -d` for containerized production
+```
+Push to main
+    │
+    ├── TypeScript type check + ESLint
+    ├── Python backend tests
+    ├── Frontend build verification
+    │
+    ├── Build & push Docker images → GitHub Container Registry (GHCR)
+    │
+    ├── Deploy backend → Render.com (via deploy hook)
+    └── Deploy frontend → Vercel (via CLI)
+```
 
-### Long-Term
-- [ ] **AI Threat Correlation** — GPT-4/Llama-based automated investigation summaries
-- [ ] **Multi-tenancy** — Organization-level data isolation
-- [ ] **Mobile PWA** — Responsive progressive web app for analyst on-call
-- [ ] **SIEM Integrations** — Splunk, Elastic, QRadar log forwarding connectors
-
----
-
-## 📚 Technical Documentation
-Detailed technical documentation can be found in the `docs/` folder of the repository:
-- `docs/ARCHITECTURE_AND_API.md`: System design and API contract overview.
-- `docs/DATABASE_SCHEMA.md`: Deep dive into entity relationships.
-- `docs/PROJECT_DESIGN.md`: High-level design principles and UI wireframe notes.
-- `docs/SETUP_GUIDE.md`: Elaborated local environment setup instructions.
+See [docs/DEPLOYMENT_GUIDE.md#option-c](docs/DEPLOYMENT_GUIDE.md#option-c--github-actions-auto-deploy-cicd) for setup instructions.
 
 ---
 
-## 📄 License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and commit: `git commit -m "Add your feature"`
+4. Push and open a Pull Request against `main`
+
+All PRs must pass the CI pipeline (type check, lint, build) before merging.
+
+---
+
+## License
+
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+Built with ❤️ by the ForenSOC team · <a href="docs/DEPLOYMENT_GUIDE.md">Deploy it now</a>
+</div>

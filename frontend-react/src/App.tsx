@@ -7,16 +7,40 @@ import Routes from '@components/Routes';
 import { socketService } from '@services/socketService';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { CommandPalette, GlossaryModal, FloatingActions } from '@components';
 
-const SIDEBAR_WIDTH = 240;
 const TOP_BAR_HEIGHT = 48;
 const MOBILE_APPBAR_HEIGHT = 56;
 
 const App: React.FC = () => {
   const { isAuthenticated, setUser, setToken } = useAuthStore();
   const [loading, setLoading] = React.useState(true);
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const [glossaryOpen, setGlossaryOpen] = React.useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+
+    const handleOpenSearch = () => setSearchOpen(true);
+    const handleOpenGlossary = () => setGlossaryOpen(true);
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('open-command-palette', handleOpenSearch);
+    window.addEventListener('open-glossary', handleOpenGlossary);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('open-command-palette', handleOpenSearch);
+      window.removeEventListener('open-glossary', handleOpenGlossary);
+    };
+  }, []);
 
   useEffect(() => {
     const initializeApp = async () => {
@@ -71,7 +95,6 @@ const App: React.FC = () => {
     );
   }
 
-  const sidebarWidth = isMobile ? 0 : SIDEBAR_WIDTH;
   const topOffset = isAuthenticated ? (isMobile ? MOBILE_APPBAR_HEIGHT : TOP_BAR_HEIGHT) : 0;
 
   return (
@@ -82,7 +105,8 @@ const App: React.FC = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          ml: isAuthenticated && !isMobile ? `${sidebarWidth}px` : 0,
+          // read the actual sidebar width set by Navigation via CSS variable
+          ml: isAuthenticated && !isMobile ? 'var(--forensoc-sidebar-width, 240px)' : 0,
           mt: isAuthenticated ? `${topOffset}px` : 0,
           minWidth: 0,
           transition: 'margin-left 0.3s ease',
@@ -91,7 +115,7 @@ const App: React.FC = () => {
         }}
       >
         {isAuthenticated ? (
-          <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1600, mx: 'auto' }}>
+          <Box sx={{ p: { xs: 2, sm: 3 }, width: '100%', boxSizing: 'border-box' }}>
             <Routes />
           </Box>
         ) : (
@@ -112,6 +136,24 @@ const App: React.FC = () => {
         limit={5}
         toastStyle={{ borderRadius: 10, fontSize: '0.875rem' }}
       />
+
+      {isAuthenticated && (
+        <>
+          <CommandPalette
+            open={searchOpen}
+            onClose={() => setSearchOpen(false)}
+            onOpenGlossary={() => {
+              setSearchOpen(false);
+              setGlossaryOpen(true);
+            }}
+          />
+          <GlossaryModal open={glossaryOpen} onClose={() => setGlossaryOpen(false)} />
+          <FloatingActions
+            onOpenSearch={() => setSearchOpen(true)}
+            onOpenGlossary={() => setGlossaryOpen(true)}
+          />
+        </>
+      )}
     </Box>
   );
 };

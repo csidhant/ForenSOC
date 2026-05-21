@@ -38,9 +38,11 @@ import {
   Security as MitreIcon,
   WarningAmber as AlertBellIcon,
   Menu as MenuIcon,
-  ChevronLeft as ChevronLeftIcon,
   AdminPanelSettings as AuditIcon,
   Circle as StatusDot,
+  Book as BookIcon,
+  Search as SearchIcon,
+  ChevronLeft as ChevronLeftIcon,
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore, useUiStore, useAlertStore } from '@utils/store';
@@ -55,6 +57,8 @@ interface NavItem {
   path: string;
   badge?: number;
   group?: string;
+  isAction?: boolean;
+  onClick?: () => void;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -70,6 +74,14 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Reports', icon: <ReportIcon />, path: '/reports', group: 'Intelligence' },
   { label: 'Audit Logs', icon: <AuditIcon />, path: '/audit', group: 'Admin' },
   { label: 'Settings', icon: <SettingsIcon />, path: '/settings', group: 'Admin' },
+  {
+    label: 'Glossary Guide',
+    icon: <BookIcon />,
+    path: '#glossary',
+    group: 'Admin',
+    isAction: true,
+    onClick: () => window.dispatchEvent(new CustomEvent('open-glossary')),
+  },
 ];
 
 const Navigation: React.FC = () => {
@@ -93,6 +105,18 @@ const Navigation: React.FC = () => {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const sidebarWidth = isMobile ? SIDEBAR_WIDTH : collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_WIDTH;
+
+  // Keep a CSS variable updated so other layout components can read the actual sidebar width
+  React.useEffect(() => {
+    try {
+      document.documentElement.style.setProperty('--forensoc-sidebar-width', `${sidebarWidth}px`);
+    } catch (e) {
+      // ignore in non-browser environments
+    }
+    return () => {
+      // leave value set — no-op
+    };
+  }, [sidebarWidth]);
 
   const groups = Array.from(new Set(NAV_ITEMS.map((i) => i.group)));
 
@@ -189,10 +213,11 @@ const Navigation: React.FC = () => {
                   >
                     <ListItem disablePadding sx={{ px: 1, mb: 0.25 }}>
                       <ListItemButton
-                        component={Link}
-                        to={item.path}
-                        onClick={() => isMobile && setMobileOpen(false)}
-                        selected={active}
+                        {...(item.isAction
+                          ? { onClick: () => { item.onClick?.(); if (isMobile) setMobileOpen(false); } }
+                          : { component: Link, to: item.path, onClick: () => isMobile && setMobileOpen(false) }
+                        )}
+                        selected={!item.isAction && active}
                         sx={{
                           borderRadius: 2,
                           px: collapsed && !isMobile ? 1 : 1.5,
@@ -338,6 +363,11 @@ const Navigation: React.FC = () => {
                 ForenSOC
               </Typography>
             </Box>
+            <Tooltip title="Global Search (Ctrl+K)">
+              <IconButton color="inherit" onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}>
+                <SearchIcon />
+              </IconButton>
+            </Tooltip>
             <IconButton color="inherit" onClick={toggleDarkMode}>
               {darkMode ? <LightIcon /> : <DarkIcon />}
             </IconButton>
@@ -371,6 +401,11 @@ const Navigation: React.FC = () => {
                 sx={{ bgcolor: 'rgba(16,185,129,0.1)', color: 'success.main', border: '1px solid rgba(16,185,129,0.2)', fontWeight: 500 }}
               />
             </Box>
+            <Tooltip title="Global Search (Ctrl+K)">
+              <IconButton size="small" onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}>
+                <SearchIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={darkMode ? 'Switch to Light' : 'Switch to Dark'}>
               <IconButton size="small" onClick={toggleDarkMode}>
                 {darkMode ? <LightIcon fontSize="small" /> : <DarkIcon fontSize="small" />}
