@@ -15,10 +15,6 @@ from app.models.base import Base
 from app.models.detection import DetectionRule
 from app.services.socket_manager import socket_manager
 
-
-# Create all tables
-Base.metadata.create_all(bind=engine)
-
 settings = get_settings()
 
 # Initialize Rate Limiter
@@ -33,6 +29,12 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
 )
+
+# Database initialization helper
+def init_database():
+    """Create database schema and seed default application data."""
+    Base.metadata.create_all(bind=engine)
+    init_default_roles_and_admin()
 
 # Set up Rate Limiter
 app.state.limiter = limiter
@@ -94,6 +96,7 @@ app.openapi = custom_openapi
 def init_default_roles_and_admin():
     """Initialize essential role definitions and default admin user."""
     from app.crud.user import RoleCRUD, UserCRUD
+    from app.services.auth_service import verify_password
 
     db = SessionLocal()
     try:
@@ -111,23 +114,34 @@ def init_default_roles_and_admin():
         # Seed default users for each of the four roles
         demo_users = [
             ("admin", settings.ADMIN_USERNAME, settings.ADMIN_EMAIL, settings.ADMIN_PASSWORD),
-            ("analyst", "analyst", "analyst@forensoc.local", "analyst"),
-            ("investigator", "investigator", "investigator@forensoc.local", "investigator"),
-            ("viewer", "viewer", "viewer@forensoc.local", "viewer"),
+            ("analyst", "analyst", "analyst@forensoc.example.com", "analyst"),
+            ("investigator", "investigator", "investigator@forensoc.example.com", "investigator"),
+            ("viewer", "viewer", "viewer@forensoc.example.com", "viewer"),
         ]
 
         for role_name, username, email, password in demo_users:
-            if not UserCRUD.get_user_by_username(db, username):
-                role = RoleCRUD.get_role_by_name(db, role_name)
-                if role:
-                    UserCRUD.create_user(
-                        db,
-                        username=username,
-                        email=email,
-                        password=password,
-                        role_id=role.id,
-                    )
-                    print(f"Seeded default demo user: {username} ({role_name})")
+            existing_user = UserCRUD.get_user_by_username(db, username)
+            role = RoleCRUD.get_role_by_name(db, role_name)
+
+            if existing_user:
+                if existing_user.email != email:
+                    UserCRUD.update_user(db, existing_user.id, email=email)
+                if role and existing_user.role_id != role.id:
+                    UserCRUD.update_user(db, existing_user.id, role_id=role.id)
+                if not verify_password(password, existing_user.password_hash):
+                    UserCRUD.update_password(db, existing_user.id, password)
+                    print(f"Updated password for existing demo user: {username}")
+                continue
+
+            if role:
+                UserCRUD.create_user(
+                    db,
+                    username=username,
+                    email=email,
+                    password=password,
+                    role_id=role.id,
+                )
+                print(f"Seeded default demo user: {username} ({role_name})")
 
         # Initialize default detection rules
         init_default_detection_rules(db)
@@ -208,7 +222,7 @@ async def startup_event():
 
 
 # Import API routers
-from app.api.auth import router as auth_router
+from app.api.auth import router as auth_router, alias_router as auth_alias_router
 from app.api.users import router as users_router
 from app.api.cases import router as cases_router
 from app.api.alerts import router as alerts_router
@@ -226,6 +240,7 @@ from app.api.public import router as public_router
 
 # Register routers
 app.include_router(auth_router)
+app.include_router(auth_alias_router)
 app.include_router(users_router)
 app.include_router(cases_router)
 app.include_router(alerts_router)

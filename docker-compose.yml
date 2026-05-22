@@ -52,7 +52,10 @@ services:
       dockerfile: Dockerfile
     container_name: forensoc-backend
     restart: unless-stopped
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
+    command:
+      - sh
+      - -c
+      - python -c 'from app.main import init_database; init_database()' && uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
     environment:
       DATABASE_URL: postgresql://forensoc_user:${POSTGRES_PASSWORD:-forensoc_changeme}@postgres:5432/forensoc
       SECRET_KEY: ${SECRET_KEY:-change-me-in-production}

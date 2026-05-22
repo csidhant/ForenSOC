@@ -26,6 +26,9 @@ email-validator>=2.0.0
 
 # --- Utilities ---
 requests==2.31.0
+geocoder==1.38.1
+yara-python==4.5.0
+python-magic==0.4.27
 loguru==0.7.2
 PyYAML==6.0.1
 watchdog==3.0.0

@@ -13,6 +13,7 @@ from app.services.auth_service import create_access_token, decode_token
 from jose import JWTError, jwt
 
 router = APIRouter(prefix="/api/auth", tags=["authentication"])
+alias_router = APIRouter(prefix="/auth", tags=["authentication"])
 settings = get_settings()
 
 
@@ -29,6 +30,7 @@ def _get_token(request: Request) -> str:
 
 
 @router.post("/login", response_model=Token)
+@alias_router.post("/login", response_model=Token)
 async def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """
     User login endpoint.
@@ -70,6 +72,9 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
 @router.post(
     "/register", response_model=UserWithRole, status_code=status.HTTP_201_CREATED
 )
+@alias_router.post(
+    "/register", response_model=UserWithRole, status_code=status.HTTP_201_CREATED
+)
 async def register(credentials: UserRegister, db: Session = Depends(get_db)):
     """
     Register a new user.
@@ -105,6 +110,7 @@ async def register(credentials: UserRegister, db: Session = Depends(get_db)):
 
 
 @router.post("/logout")
+@alias_router.post("/logout")
 async def logout():
     """
     User logout endpoint.
@@ -115,6 +121,7 @@ async def logout():
 
 
 @router.get("/me", response_model=UserWithRole)
+@alias_router.get("/me", response_model=UserWithRole)
 async def get_current_user(
     token: str = Depends(_get_token), db: Session = Depends(get_db)
 ):
@@ -152,6 +159,7 @@ async def get_current_user(
 
 
 @router.post("/refresh")
+@alias_router.post("/refresh")
 async def refresh_token(
     token: str = Depends(_get_token), db: Session = Depends(get_db)
 ):

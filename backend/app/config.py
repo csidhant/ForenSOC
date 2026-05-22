@@ -71,7 +71,7 @@ class Settings(BaseSettings):
 
     # Default admin credentials (CHANGE IN PRODUCTION!)
     ADMIN_USERNAME: str = "admin"
-    ADMIN_EMAIL: str = "admin@forensoc.local"
+    ADMIN_EMAIL: str = "admin@forensoc.example.com"
     ADMIN_PASSWORD: str = "admin"
     DEFAULT_USER_ROLE: str = "viewer"
 

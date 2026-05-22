@@ -10,7 +10,10 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    curl \
     libpq-dev \
+    libyara-dev \
+    libmagic-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
