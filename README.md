@@ -61,12 +61,12 @@ Experience the premium glassmorphic interface, tailored HSL color schemes, and r
 ```mermaid
 graph TD
     %% Nodes
-    A[Data Sources: Logs, PCAPs, RAM Dumps, Chrome DBs] --> Ingestion{Ingestion Layer}
+    A[Data Sources: Logs, PCAPs, RAM Dumps, Chrome DBs] --> IngestionLayer{Ingestion Layer}
     
-    subgraph Ingestion [Ingestion & Watchers]
-        Ingestion -->|Folder Watcher| B[watchdog Service]
-        Ingestion -->|Windows Events| C[PowerShell Ingester]
-        Ingestion -->|Manual Upload| D[FastAPI Upload Endpoints]
+    subgraph Ingestion_SG ["Ingestion & Watchers"]
+        IngestionLayer -->|Folder Watcher| B[watchdog Service]
+        IngestionLayer -->|Windows Events| C[PowerShell Ingester]
+        IngestionLayer -->|Manual Upload| D[FastAPI Upload Endpoints]
     end
     
     subgraph Processing [Processing & Analysis Engines]
