@@ -51,6 +51,11 @@ class Settings(BaseSettings):
             base.extend(extra)
         return base
 
+    @property
+    def ALLOWED_ORIGIN_REGEX(self) -> str:
+        """Allow custom local hostnames for local development and self-hosting."""
+        return r"^https?://.*\.local$"
+
     # File uploads
     UPLOAD_DIR: str = "./uploads"
     MAX_UPLOAD_SIZE: int = 500 * 1024 * 1024  # 500 MB (reduced for cloud)

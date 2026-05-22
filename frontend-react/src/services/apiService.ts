@@ -92,8 +92,12 @@ class ApiService {
   }
 
   async getNormalizedLogs(params?: any): Promise<NormalizedEvent[]> {
-    const response = await this.api.get<NormalizedEvent[]>('/logs/normalized', { params });
-    return response.data;
+    const response = await this.api.get('/logs/normalized', { params });
+    const data = response.data;
+    if (Array.isArray(data)) {
+      return data;
+    }
+    return data?.items || [];
   }
 
   // Cases

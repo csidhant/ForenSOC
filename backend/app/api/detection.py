@@ -18,6 +18,8 @@ from app.services.detection_engine import DetectionEngine, RuleManager
 from app.services.sigma_loader import SigmaLoader
 from app.api.dependencies import get_current_analyst_user
 from app.models.user import User
+from app.models.detection import DetectionRule
+from app.models.alert import Alert
 
 router = APIRouter(prefix="/api/detection", tags=["detection"])
 
@@ -168,7 +170,7 @@ async def scan_events(
     Manually scan historical events for alerts.
     """
     detection_engine = DetectionEngine(db)
-    alerts = detection_engine.scan_historical_events(scan_request.hours_back)
+    alerts = await detection_engine.scan_historical_events(scan_request.hours_back)
 
     return DetectionScanResponse(
         alerts_scanned=len(alerts),

@@ -64,7 +64,7 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@forensoc.local}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ForenSOC@2024!}
-      ALLOWED_ORIGINS_STR: ${ALLOWED_ORIGINS_STR:-http://localhost,http://localhost:3000,http://localhost:80}
+      ALLOWED_ORIGINS_STR: ${ALLOWED_ORIGINS_STR:-http://localhost,http://localhost:3000,http://localhost:80,http://docs.forensoc.local,https://docs.forensoc.local}
       UPLOAD_DIR: /app/uploads
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
       SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}

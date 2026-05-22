@@ -45,7 +45,7 @@ const CasesPage: React.FC = () => {
   const [editingCase, setEditingCase] = useState<Case | null>(null);
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    title: '', description: '', priority: Priority.MEDIUM, status: CaseStatus.OPEN,
+    case_number: '', title: '', description: '', priority: Priority.MEDIUM, status: CaseStatus.OPEN,
   });
   const navigate = useNavigate();
 
@@ -79,15 +79,33 @@ const CasesPage: React.FC = () => {
 
   const handleOpenCreate = () => {
     setEditingCase(null);
-    setFormData({ title: '', description: '', priority: Priority.MEDIUM, status: CaseStatus.OPEN });
+    setFormData({ case_number: '', title: '', description: '', priority: Priority.MEDIUM, status: CaseStatus.OPEN });
     setOpenDialog(true);
   };
 
   const handleOpenEdit = (e: React.MouseEvent, caseItem: Case) => {
     e.stopPropagation();
     setEditingCase(caseItem);
-    setFormData({ title: caseItem.title, description: caseItem.description || '', priority: caseItem.priority, status: caseItem.status });
+    setFormData({
+      case_number: caseItem.case_number || '',
+      title: caseItem.title,
+      description: caseItem.description || '',
+      priority: caseItem.priority,
+      status: caseItem.status,
+    });
     setOpenDialog(true);
+  };
+
+  const formatSaveError = (err: any): string => {
+    const detail = err?.response?.data?.detail;
+    if (Array.isArray(detail)) {
+      return detail
+        .map((item: any) => (typeof item === 'string' ? item : item.msg || JSON.stringify(item)))
+        .join('; ');
+    }
+    if (typeof detail === 'string') return detail;
+    if (err?.message) return err.message;
+    return 'Failed to save case';
   };
 
   const handleSave = async () => {
@@ -101,7 +119,7 @@ const CasesPage: React.FC = () => {
       await loadCases();
       setOpenDialog(false);
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to save case');
+      setError(formatSaveError(err));
     } finally {
       setSaving(false);
     }
@@ -334,9 +352,14 @@ const CasesPage: React.FC = () => {
         </DialogTitle>
         <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <TextField
+            label="Case Number *" value={formData.case_number}
+            onChange={e => setFormData({ ...formData, case_number: e.target.value })}
+            fullWidth autoFocus placeholder="e.g. CASE-2026-001"
+          />
+          <TextField
             label="Case Title *" value={formData.title}
             onChange={e => setFormData({ ...formData, title: e.target.value })}
-            fullWidth autoFocus placeholder="e.g. Ransomware Incident - Finance Department"
+            fullWidth placeholder="e.g. Ransomware Incident - Finance Department"
           />
           <TextField
             label="Description" value={formData.description}
@@ -371,7 +394,11 @@ const CasesPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving || !formData.title}>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={saving || !formData.title || !formData.case_number}
+          >
             {saving ? <CircularProgress size={20} /> : (editingCase ? 'Update Case' : 'Create Case')}
           </Button>
         </DialogActions>

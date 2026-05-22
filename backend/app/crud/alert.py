@@ -74,6 +74,9 @@ class AlertCRUD:
         source_city: Optional[str] = None,
         source_lat: Optional[float] = None,
         source_lng: Optional[float] = None,
+        status: Optional[str] = "New",
+        raw_event_id: Optional[int] = None,
+        detection_rule_id: Optional[int] = None,
     ) -> Alert:
 
         """Create a new alert."""
@@ -82,7 +85,7 @@ class AlertCRUD:
             title=title,
             severity=severity,
             description=description,
-            status="New",
+            status=status,
             alert_type=alert_type,
             source_ip=source_ip,
             dest_ip=dest_ip,
@@ -99,6 +102,8 @@ class AlertCRUD:
             source_city=source_city,
             source_lat=source_lat,
             source_lng=source_lng,
+            raw_event_id=raw_event_id,
+            detection_rule_id=detection_rule_id,
         )
 
 

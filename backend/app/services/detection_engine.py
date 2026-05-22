@@ -8,7 +8,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, func
+from sqlalchemy import and_, func, or_
 
 from app.models.detection import DetectionRule
 from app.models.event import NormalizedEvent
@@ -43,7 +43,7 @@ class DetectionEngine:
         if event.event_type:
             # Rules can specify event_type filter or be general (None)
             query = query.filter(
-                and_(
+                or_(
                     DetectionRule.event_type.is_(None),
                     DetectionRule.event_type == event.event_type,
                 )
@@ -211,7 +211,7 @@ class DetectionEngine:
             logger.error(f"Failed to create alert for rule {rule.name}: {e}")
             return None
 
-    def scan_historical_events(self, hours_back: int = 24) -> List[Alert]:
+    async def scan_historical_events(self, hours_back: int = 24) -> List[Alert]:
         """
         Scan historical normalized events and generate alerts.
         Useful for backfilling or testing rules.
@@ -228,7 +228,7 @@ class DetectionEngine:
             f"Scanning {len(events)} historical events from last {hours_back} hours"
         )
 
-        return self.process_events_batch(events)
+        return await self.process_events_batch(events)
 
 
 class RuleManager:

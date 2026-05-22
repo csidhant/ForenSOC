@@ -13,7 +13,6 @@ from app.schemas.event import (
     NormalizedEventResponse,
     LogIngestResponse,
 )
-from app.schemas.pagination import PaginatedResponse
 from app.crud.event import EventCRUD
 from app.services.log_parser import LogParserService
 from app.api.dependencies import get_current_analyst_user
@@ -93,20 +92,24 @@ async def list_raw_events(
     case_id: Optional[int] = None,
     start_time: Optional[datetime] = Query(None),
     end_time: Optional[datetime] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_analyst_user),
     db: Session = Depends(get_db),
 ):
     """
     List raw ingested log events.
     """
+    final_start = start_time or start_date
+    final_end = end_time or end_date
     events = EventCRUD.get_raw_events(
         db,
         skip=skip,
         limit=limit,
         log_source=log_source,
         case_id=case_id,
-        start_time=start_time,
-        end_time=end_time,
+        start_time=final_start,
+        end_time=final_end,
     )
     return [RawEventResponse.from_orm(event) for event in events]
 
@@ -141,13 +144,17 @@ async def list_normalized_events(
     dest_ip: Optional[str] = None,
     start_time: Optional[datetime] = Query(None),
     end_time: Optional[datetime] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
     current_user: User = Depends(get_current_analyst_user),
     db: Session = Depends(get_db),
 ):
     """
     List normalized events with optional filters.
     """
-    items, total = EventCRUD.get_normalized_events_paginated(
+    final_start = start_time or start_date
+    final_end = end_time or end_date
+    items = EventCRUD.get_normalized_events(
         db,
         skip=skip,
         limit=limit,
@@ -158,17 +165,11 @@ async def list_normalized_events(
         hostname=hostname,
         source_ip=source_ip,
         dest_ip=dest_ip,
-        start_time=start_time,
-        end_time=end_time,
+        start_time=final_start,
+        end_time=final_end,
     )
 
-    return PaginatedResponse(
-        items=[NormalizedEventResponse.from_orm(event) for event in items],
-        total=total,
-        page=(skip // limit) + 1,
-        size=limit,
-        pages=(total + limit - 1) // limit,
-    )
+    return [NormalizedEventResponse.from_orm(event) for event in items]
 
 
 @router.get("/normalized/{normalized_event_id}", response_model=NormalizedEventResponse)

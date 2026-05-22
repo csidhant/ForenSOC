@@ -99,8 +99,8 @@ const LogExplorerPage: React.FC = () => {
       };
 
       if (searchFilters.log_source) params.log_source = searchFilters.log_source;
-      if (searchFilters.start_date) params.start_date = searchFilters.start_date;
-      if (searchFilters.end_date) params.end_date = searchFilters.end_date;
+      if (searchFilters.start_date) params.start_time = searchFilters.start_date;
+      if (searchFilters.end_date) params.end_time = searchFilters.end_date;
       if (searchFilters.search_term) params.search = searchFilters.search_term;
       if (searchFilters.case_id) params.case_id = searchFilters.case_id;
 
@@ -122,8 +122,8 @@ const LogExplorerPage: React.FC = () => {
         page_size: 50,
       };
 
-      if (searchFilters.start_date) params.start_date = searchFilters.start_date;
-      if (searchFilters.end_date) params.end_date = searchFilters.end_date;
+      if (searchFilters.start_date) params.start_time = searchFilters.start_date;
+      if (searchFilters.end_date) params.end_time = searchFilters.end_date;
       if (searchFilters.search_term) params.search = searchFilters.search_term;
       if (searchFilters.case_id) params.case_id = searchFilters.case_id;
       if (searchFilters.severity) params.severity = searchFilters.severity;

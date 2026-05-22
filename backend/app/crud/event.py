@@ -161,7 +161,6 @@ class EventCRUD:
         )
 
     @staticmethod
-    @staticmethod
     def get_normalized_events_paginated(
         db: Session, skip: int = 0, limit: int = 50, **filters
     ) -> Tuple[List[NormalizedEvent], int]:
