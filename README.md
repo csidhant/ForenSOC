@@ -1,16 +1,27 @@
 # 🛡️ ForenSOC
 
-### **Advanced Integrated Security Operations Center (SIEM) & Digital Forensics Workspace**
+<p align="center">
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+  <img src="https://img.shields.io/badge/MUI-%230081CB.svg?style=for-the-badge&logo=mui&logoColor=white" alt="Material UI" />
+  <img src="https://img.shields.io/badge/postgres-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge" alt="MIT License" />
+</p>
 
-ForenSOC is a premium, enterprise-grade, open-source **Security Operations Center (SOC)** and **Digital Forensics & Incident Response (DFIR)** platform. It integrates log ingestion, real-time threat detection (Sigma rules engine), collaborative case management, interactive network/memory forensics, and audit-compliant reporting into a stunning, responsive, dark-mode dashboard.
+### **Enterprise-Grade Security Operations Center (SIEM) & Orchestrated Digital Forensics (DFIR) Platform**
+
+**ForenSOC** is a state-of-the-art, open-source **Security Operations Center (SOC)** and **Digital Forensics & Incident Response (DFIR)** platform. Designed to meet the standards of professional cybersecurity analysts and incident responders, ForenSOC integrates high-performance log ingestion, real-time threat detection (via a multi-threaded Sigma rules engine), collaborative case management, automated network and memory forensics (Zeek, Suricata, Volatility 3), and audit-compliant reporting into a stunning, responsive, dark-mode dashboard.
 
 ---
 
 ## 🖥️ Platform Showcase & Interface Gallery
 
-Experience the premium glassmorphic interface, tailored HSL color schemes, and responsive animations of ForenSOC:
+Experience the premium glassmorphic interface, tailored HSL color schemes, and responsive micro-animations of ForenSOC:
 
-### 📊 Security posture & Live SIEM Dashboard
+### 📊 Security Posture & Live SIEM Dashboard
 *Analyze real-time events, monitor global threat metrics, and track dynamic log source ingestion.*
 ![Security Posture & SIEM Dashboard](screenshort/Screenshot%202026-05-22%20130105.png)
 
@@ -26,105 +37,246 @@ Experience the premium glassmorphic interface, tailored HSL color schemes, and r
 *Maintain chain-of-custody tracking with SHA-256 validation, generate expert reports, and inspect system audit logs.*
 ![Case Management & Audit Logs](screenshort/Screenshot%202026-05-22%20210800.png)
 
+<details>
+<summary><b>🔍 Click to Expand Extended Interface Gallery</b></summary>
+
+#### 🗺️ Global Threat & Connection Map
+*Visualize threat geographic locations dynamically on a interactive map.*
+![Threat Map](screenshort/Screenshot%202026-05-22%20132608.png)
+
+#### 📝 Interactive Chain-of-Custody (CoC) Ledger
+*Ensuring full cryptographic traceability of forensic evidence.*
+![Chain of Custody](screenshort/Screenshot%202026-05-22%20210806.png)
+
+#### 📁 Public Threat Sandbox Scanning
+*Scan payloads using YARA rules without requiring authentication in the external sandbox.*
+![Public Sandbox](screenshort/Screenshot%202026-05-22%20210747.png)
+
+</details>
+
 ---
 
-## ✨ Core Capabilities
+## ✨ Core Pillars & Architecture Features
 
-| Pillar | Features & Implementations |
+```mermaid
+graph TD
+    %% Nodes
+    A[Data Sources: Logs, PCAPs, RAM Dumps, Chrome DBs] --> Ingestion{Ingestion Layer}
+    
+    subgraph Ingestion [Ingestion & Watchers]
+        Ingestion -->|Folder Watcher| B[watchdog Service]
+        Ingestion -->|Windows Events| C[PowerShell Ingester]
+        Ingestion -->|Manual Upload| D[FastAPI Upload Endpoints]
+    end
+    
+    subgraph Processing [Processing & Analysis Engines]
+        B & C -->|Logs Ingest| E[Multi-threaded Sigma & Rule Engine]
+        D -->|PCAP Upload| F[Zeek & Suricata Analyser]
+        D -->|RAM Dump| G[Volatility 3 Core wrapper]
+        D -->|Files/Dumps| H[YARA Payload Scanner]
+        D -->|Chrome History| I[SQLite Browser Forensics]
+    end
+    
+    subgraph Database [Persistence & Audit]
+        E & F & G & H & I -->|Structured Events & Alerts| J[(PostgreSQL / SQLite Database)]
+        J -->|Immutable Hash Ledger| K[SHA-256 Evidence Vault & Chain of Custody]
+        J -->|System Activity Logs| L[Tamper-resistant Audit Logs]
+    end
+    
+    subgraph Presentation [Presentation & Real-Time Sync]
+        J -->|FastAPI REST API| M[React 18 / TypeScript SPA]
+        J -->|Socket.io WebSockets| M
+        M -->|Interactive Visuals| N[MUI Dark Dashboard, Global Threat Map, MITRE ATT&CK Matrix]
+        M -->|Compliance Reports| O[ReportLab PDF Engine]
+    end
+
+    %% Styles
+    style A fill:#1a1c23,stroke:#3b82f6,stroke-width:2px,color:#ffffff
+    style J fill:#111827,stroke:#10b981,stroke-width:2px,color:#ffffff
+    style M fill:#1e1b4b,stroke:#a855f7,stroke-width:2px,color:#ffffff
+    style O fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#ffffff
+```
+
+### 🔍 1. Real-Time SIEM & Advanced Detection
+* **Multi-threaded Sigma Rule Engine**: Instant parsing, validation, and real-time detection rule evaluation.
+* **Correlated Log Ingestion**: Normalization and ingestion of Suricata EVE logs, custom Syslog structures, and network event indicators.
+* **Time-Window Brute Force Thresholds**: State-aware tracking for rate-based events (e.g. multiple failed logins within customized intervals).
+* **Live Feeds via WebSockets**: Real-time push notification and event updates to the active analyst dashboard.
+
+### 🔬 2. Advanced Digital Forensics (DFIR)
+* **Volatility 3 RAM Analysis**: Automated parsing of Windows, Linux, and macOS memory images using modern Volatility profiles.
+* **Zeek Network Analyzer**: Subprocess-driven network extraction providing deep DNS, HTTP, SSL, and Connection flow breakdown.
+* **YARA Payload Scanners**: Static and dynamic binary signature analysis to identify known malware variants.
+* **Browser Forensics SQLite Parser**: Extracts Chrome and Firefox download logs, history details, and flagged malicious URLs.
+
+### 🔒 3. Evidence Vault & Cryptographic Chain of Custody
+* **Dual Hash Verification**: Automatic calculation of SHA-256 and MD5 hashes upon ingestion of evidence files.
+* **Immutable Logs**: Cryptographically validated, user-specific log actions (ingest, download, verify) that guarantee audit compliance.
+* **Tamper Warnings**: Instantly detects and flags any server-side file modifications via scheduled integrity checks.
+
+### 🗂️ 4. Collaborative Case & SLA Management
+* **Dynamic SLA Tracking**: Visually flags breach boundaries by marking incoming triage alerts based on user-defined priority levels.
+* **Chain-of-Custody Integrations**: Direct association of cases, raw events, forensic outputs, and active investigations.
+* **Auto-reconstructed Timelines**: Instant correlation of multi-source forensic evidence into a chronological attack timeline.
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technologies & Libraries |
 | :--- | :--- |
-| 🔍 **Real-time SIEM & Detection** | Multi-threaded Sigma rule parsing, Suricata integration, custom pattern filters, time-window brute force threshholding, and live WebSocket feed updates. |
-| 🔬 **Digital Forensics (DFIR)** | Volatility 3 RAM analysis, Zeek network extraction, YARA file scanners, and automated packet capture statistics. |
-| 🔒 **Evidence Vault** | Immutable cryptographic file hash verification (SHA-256 + MD5), automated chain-of-custody logs, and role-based download controls. |
-| 🗂️ **Case & SLA Management** | Triage timelines, severity SLA markers, automated timeline rebuilding, task assignments, and customizable workflows. |
-| 🤖 **Local Security Polling** | Real-time folder watching (`ingest_drop/`) and continuous Windows Security Event Log parsing via PowerShell automation. |
-| 📊 **Reporting & Audit** | Single-click PDF case reports, dynamic global MITRE ATT&CK technique heatmaps, and tamper-resistant audit logs. |
-| 🎛️ **Analyst Polish** | Global Keyboard Command Palette (`Ctrl+K`), built-in onboarding tour guides, tooltips, and an in-app DFIR Glossary database. |
+| **Frontend Single-Page App** | React 18 (TypeScript), Vite, Material UI (MUI v5 Premium Glassmorphism Theme), Recharts, Zustand (State Management), Socket.io-client |
+| **Backend REST Core** | FastAPI (ASGI Python 3.10+), Uvicorn Server, Watchdog File Monitor, Pydantic v2 (Validation), Python-SocketIO |
+| **Database & ORM** | PostgreSQL, SQLite (Dev Mode), SQLAlchemy 2.0 ORM, Alembic Migrations |
+| **Forensics Integrations** | Volatility 3, Zeek, YARA (yara-python), Suricata (EVE Parser) |
+| **Audit & Security** | python-jose (JWT), Passlib (Bcrypt), Python-magic, ReportLab (PDF Generation) |
 
 ---
 
-## 🛠️ Resolved Issues & QA Hardening
+## 🔑 Authentication, Roles & RBAC
 
-Through rigorous unit, integration, and manual QA validation, the following critical platform stability improvements were successfully resolved:
+ForenSOC supports robust Role-Based Access Control (RBAC) to model an enterprise SOC workspace:
 
-1. **Rule Engine Crash Fix (`/api/detection/rules`)**:
-   * *Problem:* API list and rule creation endpoints threw `NameError` due to missing `DetectionRule` and `Alert` model imports in the FastAPI endpoint module.
-   * *Solution:* Resolved and imported core database models, establishing complete endpoint connectivity.
-2. **Historical Scan Coroutine Error**:
-   * *Problem:* Triggering manual scans from the UI resulted in an unhandled backend exception: `TypeError: object of type 'coroutine' has no len()` because the synchronous `scan_historical_events` method returned an un-awaited coroutine from `process_events_batch`.
-   * *Solution:* Fully refactored `scan_historical_events` into an asynchronous method and integrated `await` calls on batch event processing.
-3. **Alert Generation Column Mismatch**:
-   * *Problem:* Alert creation crashed during rules scans due to missing DB columns (`status`, `raw_event_id`, and `detection_rule_id`) in the `AlertCRUD.create_alert` parameter signature.
-   * *Solution:* Added missing columns into the CRUD creator and fully mapped database schemas for robust threat alerts.
-4. **Duplicate Decorator Refactoring**:
-   * *Problem:* Redundant `@staticmethod` decorators identified in `EventCRUD` causing console syntax alerts.
-   * *Solution:* Cleaned up decorator declarations to conform to clean Python guidelines.
+*   👑 **Admin (`admin`)**: Complete platform administration, tenant workspace creation, rule creation (Sigma/YARA), user provisioning, and full access to system audit logs.
+*   🛡️ **Security Analyst (`analyst`)**: Real-time triage feed monitoring, threat intelligence searching, and alert linking/resolution workflows.
+*   🔬 **Investigation Analyst (`investigator`)**: Access to deep forensics, YARA scanning, Zeek packet parsing, Volatility memory analysis, chain-of-custody tracking, timeline correlation, and professional PDF security reporting.
+*   📊 **Viewer (`viewer`)**: Read-only dashboard observation and metrics overview.
+
+> [!NOTE]
+> **Default/Demo Credentials (Quick Sandbox access):**
+> *   **Username:** `admin`
+> *   **Password:** `ForenSOC@2024!`
+> *   *A convenient "Demo Access" chip is provided directly on the UI login screen to pre-fill standard credentials.*
 
 ---
 
 ## 🚀 Getting Started
 
-### ⚡ Way 1: One-Click Windows Launcher (Recommended for Development)
-Double-click the pre-built launcher file at the project root:
+### ⚡ Way 1: One-Click Windows Launcher (Recommended for Local Dev)
+Double-click the pre-configured Windows launcher at the project root:
 ```cmd
 run-forensoc.bat
 ```
-*This handles Python venv creation, packages installation (`pip install`), Node modules download, environment creation, and launches your services in separate CLI windows.*
-* **Frontend UI:** `http://localhost:3000`
+*This automatically manages Python virtual environments (`.venv`), installs all backend pip packages, downloads Node modules (`npm install`), sets up your `.env` configuration, and fires up the three core services in separate command-line windows.*
+* **Web Interface:** `http://localhost:3000`
 * **Backend API Docs:** `http://localhost:8000/api/docs`
-* **Default Credentials:** `admin` / `ForenSOC@2024!` *(Recommended: Update password immediately in Settings)*
+* **Backend Health Check:** `http://localhost:8000/health`
 
-### 🐳 Way 2: Docker Compose Setup
-To spin up the entire production-grade SIEM platform (including PostgreSQL, Redis, Celery, and Nginx proxying):
+### 🐳 Way 2: Docker Compose (Production Setup)
+To deploy the full-scale platform including PostgreSQL and custom server proxies:
 ```bash
 # Clone the repository
 git clone https://github.com/YOUR-USERNAME/ForenSOC.git
 cd ForenSOC
 
-# Establish configuration env
+# Establish environment variables
 cp .env.example .env
 
-# Deploy with Docker Compose
+# Deploy containers
 docker compose up --build -d
 ```
 
 ### ☁️ Way 3: Cloud Deployment (Vercel + Render + Supabase)
-You can deploy your own public copy of ForenSOC for **FREE** using student-friendly hosting platforms:
-1. **Database:** Create a free PostgreSQL instance on [Supabase](https://supabase.com) and copy the URI connection string.
-2. **Backend:** Connect your repository to [Render.com](https://render.com), deploying under the `render.yaml` Blueprint. Set `DATABASE_URL` to your Supabase string.
-3. **Frontend:** Import your repository to [Vercel](https://vercel.com). Set `VITE_API_BASE_URL` to your Render backend URL, specifying `frontend-react` as the root directory.
+Deploy your own instance of ForenSOC for **FREE** using cloud hosting architectures:
+1. **Database:** Provision a free PostgreSQL database on [Supabase](https://supabase.com) and copy the connection string.
+2. **Backend Engine:** Connect your fork to [Render.com](https://render.com), deploying under the `render.yaml` Blueprint. Set `DATABASE_URL` to your Supabase credentials.
+3. **Frontend UI:** Deploy your frontend directly on [Vercel](https://vercel.com). Define `VITE_API_BASE_URL` as your Render backend URL, pointing `frontend-react` as the root directory.
 
-*Detailed deployment layouts and guidelines can be inspected in [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).*
+*For complete step-by-step instructions, see the [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md).*
 
 ---
 
-## 🏗️ Project Architecture
+## 🏗️ Programmatic REST API Interaction
+
+ForenSOC exposes a fully documented OpenAPI schema. You can integrate custom scripts or interact with it programmatically:
+
+### 1. Authenticate & Obtain JWT Token
+```bash
+curl -X POST "http://localhost:8000/api/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=admin&password=ForenSOC@2024!"
+```
+
+### 2. Ingest Logs for Sigma Rule Scanning
+```bash
+curl -X POST "http://localhost:8000/api/logs/ingest" \
+  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "log_source": "windows_events",
+    "logs": [
+      "{\"EventID\": 4625, \"Username\": \"administrator\", \"IpAddress\": \"192.168.1.105\", \"Severity\": \"High\"}"
+    ]
+  }'
+```
+
+### 3. Upload Forensic Evidence to Case File
+```bash
+curl -X POST "http://localhost:8000/api/evidence/upload" \
+  -H "Authorization: Bearer <YOUR_JWT_TOKEN>" \
+  -F "case_id=1" \
+  -F "evidence_type=pcap" \
+  -F "file=@/path/to/malicious_traffic.pcap" \
+  -F "description=Suspicious port scan and lateral movement"
+```
+
+---
+
+## 🛠️ Resolved Issues & QA Hardening
+
+Through comprehensive testing, we resolved several high-priority structural bugs to guarantee platform stability:
+
+1. **Rule Engine Crash Fix (`/api/detection/rules`)**:
+   * *Problem:* Endpoints failed with `NameError` due to missing database model dependencies in the rule router module.
+   * *Solution:* Fully imported base models and integrated model connections inside the API controllers.
+2. **Historical Scan Coroutine Resolution**:
+   * *Problem:* Running historical queries caused unhandled runtime exceptions (`TypeError: object of type 'coroutine' has no len()`) because asynchronous functions were called synchronously without `await`.
+   * *Solution:* Refactored historical scanning wrappers into full `async/await` coroutine declarations.
+3. **Alert Creation Schema Alignment**:
+   * *Problem:* DB inserts failed due to missing columns (`status`, `raw_event_id`, and `detection_rule_id`) in `AlertCRUD` method calls.
+   * *Solution:* Aligned CRUD database inserts with Pydantic validation models, enabling precise alert logging.
+4. **Decorator Cleanup**:
+   * *Problem:* Redundant `@staticmethod` decorators in DB controllers triggered linter and syntax alerts.
+   * *Solution:* Cleaned up static declarations and established clean Python standards.
+
+---
+
+## 🏗️ Project Architecture & Structure
 
 ```
 ForenSOC/
 ├── backend/                   Python / FastAPI backend engine
 │   ├── app/
-│   │   ├── api/               17 API route controllers (alerts, cases, evidence, detection...)
-│   │   ├── crud/              ORM CRUD transactions (AlertCRUD, CaseCRUD...)
+│   │   ├── api/               17 controller routes (alerts, cases, evidence, forensics, yara...)
+│   │   ├── crud/              SQLAlchemy DB Transactions (AlertCRUD, CaseCRUD...)
 │   │   ├── models/            SQLAlchemy Database Entities
-│   │   ├── schemas/           Pydantic schemas for network input/output
-│   │   └── services/          SIEM engine, Plaso, Plar, Plost, Plos, Yara, Volatility...
-│   ├── automation_service.py  Folder watcher + PowerShell event polling
-│   └── tests/                 Pytest suite (including newly introduced Detection Rule tests)
+│   │   ├── schemas/           Pydantic I/O models
+│   │   ├── services/          DFIR Engines (Zeek, Yara, Volatility 3, Ingest, PDF Generator...)
+│   │   └── utils/             Cryptographic & operational utility files
+│   ├── automation_service.py  Folder watcher + PowerShell event polling service
+│   └── tests/                 Pytest execution engine
 │
-├── frontend-react/            React 18 / TypeScript / MUI Premium Dark UI
+├── frontend-react/            React 18 / TypeScript SPA
 │   ├── src/
+│   │   ├── components/        Custom UI components (CommandPalette, HelpTooltip, FloatingActions...)
 │   │   ├── pages/             17 beautifully crafted analytical workspaces
-│   │   ├── components/        Reusable UI Widgets, Breadcrumbs, GlobalThreatMap
-│   │   └── theme/             Harmonious glassmorphic palette
-│   └── vite.config.ts         Vite bundler setup
+│   │   ├── theme/             Material UI Glassmorphic Dark theme
+│   │   └── utils/             Helper scripts & definition tables
+│   └── vite.config.ts         Vite bundler configuration
 │
-└── docs/                      Comprehensive DFIR manuals & references
+└── docs/                      Comprehensive DFIR documentation & references
 ```
 
 ---
 
+## 🛡️ Cybersecurity Ethical Use Disclaimer
+
+ForenSOC is designed strictly for authorized security operations, academic training, and legitimate digital forensic investigations. Users must ensure compliance with all regional laws, industry compliance mandates, and corporate guidelines prior to conducting live analysis, traffic inspection, or memory ingestion.
+
+---
+
 ## 📜 License
-This project is released under the **MIT License**. Feel free to use, modify, and distribute it for both academic and corporate settings. See [LICENSE](LICENSE) for more details.
+This project is released under the **MIT License**. Feel free to use, modify, and distribute it for both academic and corporate settings. See the [LICENSE](LICENSE) file for more details.
 
 <div align="center">
   Built with ❤️ by the ForenSOC engineering team.
