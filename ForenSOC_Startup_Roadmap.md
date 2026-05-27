@@ -26,7 +26,7 @@ Let's be real before anything else. Here's where you stand:
 | **No public website / landing page** | ❌ Critical | Nobody can find you or sign up |
 | **MIT License (too open)** | ⚠️ Risk | Anyone can copy and sell your work — fine for community, bad for commercial |
 | **No company formed** | ⚠️ Needed soon | Before any investor or customer signs, you need a legal entity |
-| **Demo credentials in README** | ⚠️ Security risk | Remove `admin / ForenSOC@2024!` from public README before launch |
+| **Demo credentials in README** | ⚠️ Security risk | Remove hardcoded credentials from public README before launch |
 | **No metrics/telemetry** | ⚠️ Investor gap | No way to show traction or usage data |
 | **No competitor positioning** | ⚠️ GTM gap | Why ForenSOC over Splunk, Elastic SIEM, or Wazuh? |
 
@@ -176,7 +176,7 @@ Offer ForenSOC deployment + configuration as a service ($2,000–$10,000 setup f
 ```
 ❌ REMOVE from README.md:
    Username: admin
-   Password: ForenSOC@2024!
+   Password: [your-password-from-.env]
 
 ❌ REMOVE from codebase:
    - Any hardcoded secrets
