@@ -43,7 +43,7 @@ Once the windows say they are ready, open your web browser (like Chrome or Edge)
 ### 4. Whispering the Secret Password 🤫
 To enter the control room, the guard at the door will ask for credentials. Type in:
 * **Username:** `admin`
-* **Password:** `ForenSOC@2024!` (or `admin`)
+* **Password:** `[your-password-from-.env]` (or `admin`)
 
 *Ta-da! You are now sitting in the commander's seat of the Guard Tower!*
 

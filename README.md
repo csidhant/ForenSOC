@@ -193,7 +193,7 @@ ForenSOC exposes a fully documented OpenAPI schema. You can integrate custom scr
 ```bash
 curl -X POST "http://localhost:8000/api/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=admin&password=ForenSOC@2024!"
+  -d "username=admin&password=YOUR_ADMIN_PASSWORD"
 ```
 
 ### 2. Ingest Logs for Sigma Rule Scanning

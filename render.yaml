@@ -38,13 +38,10 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "1440"
 
-      # Admin account (change password after first login!)
-      - key: ADMIN_USERNAME
-        value: admin
-      - key: ADMIN_EMAIL
-        value: admin@forensoc.local
+      # SECURITY: Set this via Render Dashboard → Environment → ADMIN_PASSWORD
+      # Do NOT hardcode a real password here — this file is committed to git.
       - key: ADMIN_PASSWORD
-        value: "ForenSOC@2024!"         # ← CHANGE after first login
+        value: "CHANGE_ME_BEFORE_DEPLOY"   # ← Set a real password in Render Dashboard
 
       # CORS: fill in your Vercel frontend URL once you have it
       # e.g. https://forensoc.vercel.app

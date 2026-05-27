@@ -417,7 +417,7 @@ frontend-react/src/pages/AlertsPage.tsx (integrated SkeletonLoader in table list
 2. **Login** with default credentials
    ```
    Username: admin
-   Password: ForenSOC@2024!
+   Password: [your-password-from-.env]
    ```
 
 3. **Try Onboarding**

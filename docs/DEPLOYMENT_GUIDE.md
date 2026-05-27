@@ -246,7 +246,7 @@ Your frontend is now live at: `https://forensoc-SOMETHING.vercel.app`
 #### 5. Verify the full stack
 
 1. Open `https://forensoc-SOMETHING.vercel.app`
-2. Login with default credentials: `admin` / `ForenSOC@2024!`
+2. Login with default credentials: `admin` / `[your-password-from-.env]`
 3. **Change the password immediately** in Settings
 
 ---

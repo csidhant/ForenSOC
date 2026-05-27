@@ -87,8 +87,8 @@ echo   Web UI      : http://localhost:3000
 echo   API Docs    : http://localhost:8000/api/docs
 echo   API Health  : http://localhost:8000/health
 echo.
-echo   Default Login: admin / ForenSOC@2024!
-echo   ^> Change your password immediately in Settings.
+echo   Default Login: admin / [password from backend\.env]
+echo    ^> Set ADMIN_PASSWORD in backend\.env before first run.
 echo.
 echo  Close this window or press any key to exit the launcher.
 echo  ^(The three service windows will keep running^)

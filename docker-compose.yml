@@ -63,7 +63,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
       ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@forensoc.local}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-ForenSOC@2024!}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set in .env — copy .env.example to .env}
       ALLOWED_ORIGINS_STR: ${ALLOWED_ORIGINS_STR:-http://localhost,http://localhost:3000,http://localhost:80,http://docs.forensoc.local,https://docs.forensoc.local}
       UPLOAD_DIR: /app/uploads
       ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-1440}

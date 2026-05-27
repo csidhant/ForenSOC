@@ -30,7 +30,7 @@ docker compose up -d
 
 ```
 Username : admin
-Password : ForenSOC@2024!
+Password : [your-password-from-.env]
 ```
 > Change immediately via Settings → Change Password.
 
