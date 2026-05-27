@@ -143,10 +143,9 @@ ForenSOC supports robust Role-Based Access Control (RBAC) to model an enterprise
 *   📊 **Viewer (`viewer`)**: Read-only dashboard observation and metrics overview.
 
 > [!NOTE]
-> **Default/Demo Credentials (Quick Sandbox access):**
-> *   **Username:** `admin`
-> *   **Password:** `ForenSOC@2024!`
-> *   *A convenient "Demo Access" chip is provided directly on the UI login screen to pre-fill standard credentials.*
+> **Default Admin Account:** Created automatically on first startup using the values you set in your `.env` file.
+> Copy `.env.example` → `.env` and set `ADMIN_USERNAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` before running.
+> *A "Demo Access" chip on the login screen pre-fills whatever credentials you configured locally.*
 
 ---
 
