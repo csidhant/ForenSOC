@@ -129,7 +129,7 @@ Let's pretend a thief tried to guess the password.
 ### Step 3: Analyze the Clues in the Lab 🔬
 1. Go to the **Forensics Workspace**.
 2. Select your case *"The Midnight Mystery intruder"* from the dropdown list.
-3. Upload a sample log or PCAP file (you can find samples in the `screenshort` or testing folders).
+3. Upload a sample log or PCAP file (you can find samples in the testing folders).
 4. Click **"Analyze"**. The system will scan the file, pull out suspicious IP addresses, and lock the file safely in the **Evidence Vault** with its SHA-256 fingerprint!
 
 ### Step 4: Close the Case 🏆

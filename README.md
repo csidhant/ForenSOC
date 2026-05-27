@@ -17,45 +17,6 @@
 
 ---
 
-## 🖥️ Platform Showcase & Interface Gallery
-
-Experience the premium glassmorphic interface, tailored HSL color schemes, and responsive micro-animations of ForenSOC:
-
-### 📊 Security Posture & Live SIEM Dashboard
-*Analyze real-time events, monitor global threat metrics, and track dynamic log source ingestion.*
-![Security Posture & SIEM Dashboard](screenshort/Screenshot%202026-05-22%20130105.png)
-
-### 🛡️ Detection Rules Engine (Sigma Rules)
-*Manage custom Sigma and Suricata rules, run manual historical scans across your entire index, and map threats instantly to MITRE ATT&CK techniques.*
-![Detection Rules Workspace](screenshort/Screenshot%202026-05-22%20210659.png)
-
-### 🔬 Network & Memory Forensics Workspace
-*Upload PCAP, Memory Dumps, or Suricata EVE JSON files to run automated Volatility, Zeek, and YARA-based packet/payload analysis.*
-![Network & Memory Forensics Workspace](screenshort/Screenshot%202026-05-22%20210710.png)
-
-### 🗂️ Case Management & Audit Trails
-*Maintain chain-of-custody tracking with SHA-256 validation, generate expert reports, and inspect system audit logs.*
-![Case Management & Audit Logs](screenshort/Screenshot%202026-05-22%20210800.png)
-
-<details>
-<summary><b>🔍 Click to Expand Extended Interface Gallery</b></summary>
-
-#### 🗺️ Global Threat & Connection Map
-*Visualize threat geographic locations dynamically on a interactive map.*
-![Threat Map](screenshort/Screenshot%202026-05-22%20132608.png)
-
-#### 📝 Interactive Chain-of-Custody (CoC) Ledger
-*Ensuring full cryptographic traceability of forensic evidence.*
-![Chain of Custody](screenshort/Screenshot%202026-05-22%20210806.png)
-
-#### 📁 Public Threat Sandbox Scanning
-*Scan payloads using YARA rules without requiring authentication in the external sandbox.*
-![Public Sandbox](screenshort/Screenshot%202026-05-22%20210747.png)
-
-</details>
-
----
-
 ## ✨ Core Pillars & Architecture Features
 
 ```mermaid
